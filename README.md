@@ -566,7 +566,7 @@ plus.events.addEventListener('customEvent', function(data) {
 请确保适当更新测试。🧪
 
 ## 许可证 📄
-[MIT](https://choosealicense.com/licenses/mit/)
+[Apache License 2.0](https://choosealicense.com/licenses/apache-2.0/)
 
 ## 参考资料 📚
 
