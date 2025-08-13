@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>webview 模块测试</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 16px; background: #f8f8f8; }
+    h1 { text-align: center; }
+    button { display: block; width: 100%; max-width: 320px; margin: 16px auto; padding: 18px 0; font-size: 20px; border-radius: 8px; border: none; background: #ef6a38; color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.04); cursor: pointer; transition: background 0.2s; }
+    button:active { background: #d95c28; }
+    #result { margin: 24px auto; max-width: 600px; background: #fff; border-radius: 8px; padding: 16px; min-height: 60px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .id-input { width: 100%; max-width: 320px; margin: 8px auto; display: block; padding: 8px; font-size: 18px; border-radius: 6px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>webview 模块测试（HTML5+ 规范）</h1>
+  <button onclick="createWebview()">plus.webview.create（只创建不显示）</button>
+  <button onclick="showWebview()">WebviewObject.show()</button>
+  <button onclick="closeWebview()">WebviewObject.close()</button>
+  <button onclick="getAllWebviews()">plus.webview.all()</button>
+  <input id="getId" class="id-input" placeholder="输入要查询的 Webview id" />
+  <button onclick="getWebviewById()">plus.webview.getWebviewById(id)</button>
+  <div id="result"></div>
+  <script>
+    // 测试逻辑
+    var testWv = null;
+    function showResult(res) {
+      document.getElementById('result').innerText = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+    }
+    function createWebview() {
+      plus.webview.create('assets/web/device.html', 'testWebview').then(function(wv) {
+        testWv = wv;
+        showResult('已创建 Webview: id=' + wv.id + ', url=' + wv.url + '（未显示）');
+      });
+    }
+    function showWebview() {
+      if (!testWv) { showResult('请先创建 Webview'); return; }
+      testWv.show().then(function(res) { showResult('已显示 Webview: ' + testWv.id); });
+    }
+    function closeWebview() {
+      if (!testWv) { showResult('请先创建 Webview'); return; }
+      testWv.close().then(function(res) { showResult('已关闭 Webview: ' + testWv.id); });
+    }
+    function getAllWebviews() {
+      plus.webview.all().then(showResult);
+    }
+    function getWebviewById() {
+      var id = document.getElementById('getId').value;
+      if (!id) { showResult('请输入要查询的 Webview id'); return; }
+      plus.webview.getWebviewById(id).then(showResult);
+    }
+  </script>
+</body>
+</html> 

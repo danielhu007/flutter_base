@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>Uploader 测试页面</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 12px; background: #f7f7f7; }
+    .task { background: #fff; border: 1px solid #eee; padding: 16px; margin-bottom: 16px; border-radius: 10px; box-shadow: 0 2px 8px #0001; }
+    .progress { height: 12px; background: #eee; border-radius: 6px; margin: 10px 0; }
+    .progress-bar { height: 12px; background: #4caf50; border-radius: 6px; transition: width 0.3s; }
+    .actions { margin-top: 10px; }
+    .actions button { margin-right: 10px; padding: 10px 18px; font-size: 1.1em; border-radius: 6px; border: none; background: #2196f3; color: #fff; }
+    .actions button:last-child { background: #f44336; }
+    .actions button:active { opacity: 0.8; }
+    #log { background: #fff; border: 1px solid #eee; padding: 10px; min-height: 40px; margin-top: 18px; border-radius: 8px; font-size: 1em; }
+    input[type="text"], input[type="file"] { font-size: 1.1em; padding: 8px; border-radius: 6px; border: 1px solid #ccc; width: 90%; max-width: 400px; }
+    .form-group { margin: 10px 0; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+    @media (max-width: 600px) {
+      .task { padding: 10px; }
+      .actions button { font-size: 1em; padding: 8px 12px; }
+      input[type="text"], input[type="file"] { width: 98%; }
+    }
+  </style>
+</head>
+<body>
+  <h2 style="font-size:1.4em;">Uploader 测试页面</h2>
+  <div>
+    <div class="form-group">
+      <label for="urlInput">上传URL:</label>
+      <input id="urlInput" type="text" placeholder="输入上传链接，如 https://api.example.com/upload" />
+    </div>
+    <div class="form-group">
+      <label for="fileInput">选择文件:</label>
+      <input id="fileInput" type="file" />
+    </div>
+    <div class="form-group">
+      <label for="tokenInput">Token (可选):</label>
+      <input id="tokenInput" type="text" placeholder="输入认证token" />
+    </div>
+    <button style="padding:10px 20px;font-size:1.1em;border-radius:6px;background:#4caf50;color:#fff;border:none;" onclick="createUpload()">开始上传</button>
+  </div>
+  <h3 style="font-size:1.1em;">上传任务列表</h3>
+  <div id="taskList"></div>
+  <h3 style="font-size:1.1em;">日志</h3>
+  <div id="log"></div>
+
+  <script>
+    function log(msg) {
+      const logDiv = document.getElementById('log');
+      logDiv.innerText += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    let allTasks = [];
+
+    async function createUpload() {
+      const url = document.getElementById('urlInput').value.trim();
+      const fileInput = document.getElementById('fileInput');
+      const token = document.getElementById('tokenInput').value.trim();
+      
+      if (!url) { log('请输入上传链接'); return; }
+      if (!fileInput.files || fileInput.files.length === 0) { log('请选择文件'); return; }
+      
+      const file = fileInput.files[0];
+      log('发起上传: ' + url + ', 文件: ' + file.name);
+      
+      try {
+        // 创建上传任务
+        var utask = plus.uploader.createUpload(url, { method:'POST', chunkSize:512 }, function(u, status){
+          if(status == 200){ 
+            log('Upload success: ' + u.responseText);
+            // 标记任务已成功，触发刷新
+            const t = allTasks.find(t => t.id === u.id);
+            if (t) t._uploadSuccess = true;
+            refreshTasks();
+          }else{
+            log('Upload failed: ' + status); 
+          }
+        });
+        
+        if (utask.then) {
+          utask.then(function(task) {
+            allTasks.push(task);
+            
+            // 添加文件
+            // 注意：在真实环境中，这里需要处理文件路径，由于浏览器安全限制，这里使用模拟路径
+            task.addFile('/path/to/' + file.name, {key:'file', name:file.name});
+            
+            // 添加表单数据
+            if (token) {
+              task.addData('token', token);
+            }
+            
+            // 设置请求头
+            task.setRequestHeader('User-Agent', 'PlusUploader/1.0');
+            
+            task.addEventListener("statechanged", function(upload, state) {
+              log('任务['+(upload.url)+'] 状态变化: ' + state);
+              refreshTasks();
+            });
+            
+            task.start();
+            refreshTasks();
+          });
+        } else {
+          allTasks.push(utask);
+          
+          // 添加文件
+          utask.addFile('/path/to/' + file.name, {key:'file', name:file.name});
+          
+          // 添加表单数据
+          if (token) {
+            utask.addData('token', token);
+          }
+          
+          // 设置请求头
+          utask.setRequestHeader('User-Agent', 'PlusUploader/1.0');
+          
+          utask.addEventListener("statechanged", function(upload, state) {
+            log('任务['+(upload.url)+'] 状态变化: ' + state);
+            refreshTasks();
+          });
+          
+          utask.start();
+          refreshTasks();
+        }
+      } catch (e) {
+        log('上传创建失败: ' + e);
+      }
+    }
+
+    // 同步后端任务状态到 allTasks
+    function refreshTasks() {
+      if (window.plus && window.plus.uploader) {
+        window.flutter_invoke('uploader.enumerate', {}).then(function(tasks) {
+          allTasks.forEach(function(localTask) {
+            const remote = tasks.find(t => t.id === localTask.id);
+            if (remote) {
+              Object.assign(localTask, remote);
+            }
+          });
+          renderTaskList();
+        });
+      } else {
+        renderTaskList();
+      }
+    }
+
+    function renderTaskList() {
+      const list = document.getElementById('taskList');
+      list.innerHTML = '';
+      if (!allTasks || allTasks.length === 0) {
+        list.innerHTML = '<em>暂无任务</em>';
+        return;
+      }
+      allTasks.forEach(task => {
+        const percent = task.totalSize > 0 ? Math.floor(task.uploadedSize * 100 / task.totalSize) : 0;
+        const stateMap = {
+          '-2': '未开始', '0': '调度', '1': '请求', '2': '已连接', '3': '上传中', '4': '完成', '5': '已暂停', '-1': '失败'
+        };
+        const div = document.createElement('div');
+        div.className = 'task';
+        let html = `
+          <div style="font-size:1.1em;"><b>${task.url}</b></div>
+          <div style="margin:6px 0;">状态: <b>${stateMap[task.state] || task.state}</b> <span style="float:right;">${percent}%</span></div>
+          <div class="progress"><div class="progress-bar" style="width:${percent}%;"></div></div>
+          <div style="color:#888;">已上传: ${task.uploadedSize || 0} / ${task.totalSize || 0}</div>
+          <div class="actions">
+            <button onclick="pauseTask('${task.id}')">暂停</button>
+            <button onclick="resumeTask('${task.id}')">恢复</button>
+            <button onclick="abortTask('${task.id}')">取消</button>
+        `;
+        // 只有上传成功才显示响应信息
+        if ((task.state === 4 || task._uploadSuccess) && task.responseText) {
+          html += `<div style="margin-top:10px;padding:8px;background:#f0f0f0;border-radius:4px;font-size:0.9em;">响应: ${task.responseText.substring(0, 100)}${task.responseText.length > 100 ? '...' : ''}</div>`;
+        }
+        html += `</div>`;
+        div.innerHTML = html;
+        list.appendChild(div);
+      });
+    }
+
+    function findTaskById(id) {
+      return allTasks.find(t => t.id === id);
+    }
+    function pauseTask(id) {
+      const t = findTaskById(id); if (t) t.pause(); refreshTasks();
+    }
+    function resumeTask(id) {
+      const t = findTaskById(id); if (t) t.resume(); refreshTasks();
+    }
+    function abortTask(id) {
+      const t = findTaskById(id); if (t) t.abort(); refreshTasks();
+    }
+
+    // 定时刷新任务状态
+    setInterval(refreshTasks, 1200);
+    refreshTasks();
+  </script>
+</body>
+</html> 

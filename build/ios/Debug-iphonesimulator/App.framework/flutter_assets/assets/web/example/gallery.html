@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>plus.gallery 测试</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    body {
+      font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f7f7f7;
+    }
+    .container {
+      max-width: 480px;
+      margin: 32px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      padding: 24px 16px 16px 16px;
+    }
+    h2 {
+      text-align: center;
+      margin-top: 0;
+      color: #333;
+    }
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .input-row input {
+      flex: 1;
+      padding: 6px 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 15px;
+    }
+    .input-row select {
+      flex: 1;
+      padding: 6px 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 15px;
+    }
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    button {
+      flex: 1 1 40%;
+      min-width: 90px;
+      padding: 8px 0;
+      border: none;
+      border-radius: 6px;
+      background: #1976d2;
+      color: #fff;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover, button:active {
+      background: #1565c0;
+    }
+    .info {
+      margin-top: 16px;
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 12px 10px;
+      font-size: 15px;
+      color: #444;
+    }
+    .info-row {
+      margin-bottom: 6px;
+    }
+    #eventlog {
+      background: #222;
+      color: #b2ff59;
+      font-size: 13px;
+      border-radius: 4px;
+      padding: 6px;
+      max-height: 100px;
+      overflow: auto;
+      margin-top: 6px;
+    }
+    .image-preview {
+      margin-top: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .image-preview img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    @media (max-width: 600px) {
+      .container { margin: 0; border-radius: 0; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>plus.gallery 测试页面</h2>
+    
+    <div class="btn-group">
+      <button onclick="pickSingleImage()">单选图片</button>
+      <button onclick="pickMultipleImages()">多选图片</button>
+      <button onclick="pickSingleVideo()">单选视频</button>
+      <button onclick="pickWithCrop()">选择并裁剪</button>
+    </div>
+    
+    <div class="input-row">
+      <input id="savePath" placeholder="输入要保存的文件路径" value="">
+      <button onclick="saveToGallery()">保存到相册</button>
+    </div>
+    
+    <div class="info">
+      <div class="info-row">选择结果:</div>
+      <div id="result">-</div>
+      <div class="info-row">事件日志:</div>
+      <pre id="eventlog"></pre>
+    </div>
+    
+    <div id="imagePreview" class="image-preview"></div>
+  </div>
+  
+  <script>
+    // 单选图片
+    function pickSingleImage() {
+      if (!plus || !plus.gallery) {
+        alert('plus.gallery 未注入');
+        return;
+      }
+      
+      plus.gallery.pick(
+        function(path) {
+          showResult('单选图片成功: ' + path);
+          showEvent('单选图片成功');
+          previewImage(path);
+        },
+        function(error) {
+          showResult('单选图片失败: ' + (error.message || '未知错误'));
+          showEvent('单选图片失败');
+        },
+        {
+          filter: 'image',
+          multiple: false
+        }
+      );
+    }
+    
+    // 多选图片
+    function pickMultipleImages() {
+      if (!plus || !plus.gallery) {
+        alert('plus.gallery 未注入');
+        return;
+      }
+      
+      plus.gallery.pick(
+        function(result) {
+          const files = result.files || [];
+          showResult('多选图片成功，共 ' + files.length + ' 张: ' + files.join(', '));
+          showEvent('多选图片成功');
+          previewImages(files);
+        },
+        function(error) {
+          showResult('多选图片失败: ' + (error.message || '未知错误'));
+          showEvent('多选图片失败');
+        },
+        {
+          filter: 'image',
+          multiple: true,
+          maximum: 5
+        }
+      );
+    }
+    
+    // 单选视频
+    function pickSingleVideo() {
+      if (!plus || !plus.gallery) {
+        alert('plus.gallery 未注入');
+        return;
+      }
+      
+      plus.gallery.pick(
+        function(path) {
+          showResult('单选视频成功: ' + path);
+          showEvent('单选视频成功');
+        },
+        function(error) {
+          showResult('单选视频失败: ' + (error.message || '未知错误'));
+          showEvent('单选视频失败');
+        },
+        {
+          filter: 'video',
+          multiple: false
+        }
+      );
+    }
+    
+    // 选择并裁剪
+    function pickWithCrop() {
+      if (!plus || !plus.gallery) {
+        alert('plus.gallery 未注入');
+        return;
+      }
+      
+      plus.gallery.pick(
+        function(path) {
+          showResult('选择并裁剪成功: ' + path);
+          showEvent('选择并裁剪成功');
+          previewImage(path);
+        },
+        function(error) {
+          showResult('选择并裁剪失败: ' + (error.message || '未知错误'));
+          showEvent('选择并裁剪失败');
+        },
+        {
+          filter: 'image',
+          multiple: false,
+          crop: {
+            width: 300,
+            height: 300,
+            quality: 90
+          }
+        }
+      );
+    }
+    
+    // 保存到相册
+    function saveToGallery() {
+      if (!plus || !plus.gallery) {
+        alert('plus.gallery 未注入');
+        return;
+      }
+      
+      const path = document.getElementById('savePath').value;
+      if (!path) {
+        alert('请输入要保存的文件路径');
+        return;
+      }
+      
+      plus.gallery.save(
+        path,
+        function(result) {
+          showResult('保存到相册成功: ' + (result.path || path));
+          showEvent('保存到相册成功');
+        },
+        function(error) {
+          showResult('保存到相册失败: ' + (error.message || '未知错误'));
+          showEvent('保存到相册失败');
+        }
+      );
+    }
+    
+    // 显示结果
+    function showResult(text) {
+      document.getElementById('result').innerText = text;
+    }
+    
+    // 显示事件
+    function showEvent(event) {
+      const log = document.getElementById('eventlog');
+      log.innerText = `[${new Date().toLocaleTimeString()}] ${event}\n` + log.innerText;
+    }
+    
+    // 预览单张图片
+    function previewImage(path) {
+      const preview = document.getElementById('imagePreview');
+      preview.innerHTML = '';
+      
+      if (path) {
+        const img = document.createElement('img');
+        img.src = path;
+        preview.appendChild(img);
+      }
+    }
+    
+    // 预览多张图片
+    function previewImages(paths) {
+      const preview = document.getElementById('imagePreview');
+      preview.innerHTML = '';
+      
+      if (paths && paths.length > 0) {
+        paths.forEach(function(path) {
+          const img = document.createElement('img');
+          img.src = path;
+          preview.appendChild(img);
+        });
+      }
+    }
+    
+    // 等待 plusready
+    document.addEventListener('plusready', function() {
+      showEvent('plus.gallery 已就绪');
+    });
+  </script>
+</body>
+</html>

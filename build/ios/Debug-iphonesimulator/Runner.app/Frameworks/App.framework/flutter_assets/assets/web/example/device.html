@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>plus.device 测试</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; padding: 16px; background: #f8f8f8; }
+    button { display: block; width: 100%; max-width: 320px; margin: 12px auto; padding: 16px 0; font-size: 18px; border-radius: 8px; border: none; background: #ef6a38; color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.04); cursor: pointer; transition: background 0.2s; }
+    button:active { background: #d95c28; }
+  </style>
+</head>
+<body>
+  <h1>plus.device 测试</h1>
+  <button onclick="testModel()">获取 model</button>
+  <button onclick="testVendor()">获取 vendor</button>
+  <button onclick="testUuid()">获取 uuid</button>
+  <button onclick="testGetInfo()">getInfo</button>
+  <button onclick="testBeep()">beep</button>
+  <button onclick="testDial()">dial</button>
+  <button onclick="testVibrate()">vibrate</button>
+  <button onclick="testGetCurrentType()">获取网络类型</button>
+  <button onclick="testIsSetProxy()">检查代理设置</button>
+  <button onclick="testOSInfo()">获取操作系统信息</button>
+  <script>
+    let plusReady = false;
+    
+    function checkPlusReady() {
+      if (!plusReady) {
+        alert('Plus环境未就绪，请等待页面完全加载');
+        return false;
+      }
+      return true;
+    }
+    
+    function testModel() {
+      if (!checkPlusReady()) return;
+      try {
+        // plus.device.model 应该是同步属性，不是Promise
+        const model = plus.device.model;
+        alert('model: ' + model);
+      } catch (e) {
+        alert('获取model失败: ' + e.message);
+      }
+    }
+    
+    function testVendor() {
+      if (!checkPlusReady()) return;
+      try {
+        const vendor = plus.device.vendor;
+        alert('vendor: ' + vendor);
+      } catch (e) {
+        alert('获取vendor失败: ' + e.message);
+      }
+    }
+    
+    function testUuid() {
+      if (!checkPlusReady()) return;
+      try {
+        const uuid = plus.device.uuid;
+        alert('uuid: ' + uuid);
+      } catch (e) {
+        alert('获取uuid失败: ' + e.message);
+      }
+    }
+    
+    function testGetInfo() {
+      if (!checkPlusReady()) return;
+      try {
+        plus.device.getInfo(function(info) {
+          alert('getInfo: ' + JSON.stringify(info, null, 2));
+        });
+      } catch (e) {
+        alert('调用getInfo失败: ' + e.message);
+      }
+    }
+    
+    function testBeep() {
+      if (!checkPlusReady()) return;
+      try {
+        plus.device.beep(1);
+        alert('已调用 beep');
+      } catch (e) {
+        alert('调用beep失败: ' + e.message);
+      }
+    }
+    
+    function testDial() {
+      if (!checkPlusReady()) return;
+      try {
+        var number = prompt('请输入要拨打的号码', '10086');
+        if (number) {
+          plus.device.dial(number, false);
+        }
+      } catch (e) {
+        alert('调用dial失败: ' + e.message);
+      }
+    }
+    
+    function testVibrate() {
+      if (!checkPlusReady()) return;
+      try {
+        plus.device.vibrate(500);
+        alert('已调用 vibrate');
+      } catch (e) {
+        alert('调用vibrate失败: ' + e.message);
+      }
+    }
+    
+    function testGetCurrentType() {
+      if (!checkPlusReady()) return;
+      try {
+        plus.networkinfo.getCurrentType().then(function(type) {
+          let typeStr = '未知';
+          switch(type) {
+            case 0: typeStr = '未知'; break;
+            case 1: typeStr = '无网络'; break;
+            case 2: typeStr = '有线网络'; break;
+            case 3: typeStr = 'Wi-Fi'; break;
+            case 4: typeStr = '2G'; break;
+            case 5: typeStr = '3G'; break;
+            case 6: typeStr = '4G'; break;
+            case 7: typeStr = '5G'; break;
+          }
+          alert('当前网络类型: ' + typeStr + ' (' + type + ')');
+        });
+      } catch (e) {
+        alert('获取网络类型失败: ' + e.message);
+      }
+    }
+    
+    function testIsSetProxy() {
+      if (!checkPlusReady()) return;
+      try {
+        plus.networkinfo.isSetProxy().then(function(isSet) {
+          alert('代理设置: ' + (isSet ? '已设置' : '未设置'));
+        });
+      } catch (e) {
+        alert('检查代理设置失败: ' + e.message);
+      }
+    }
+    
+    function testOSInfo() {
+      if (!checkPlusReady()) return;
+      try {
+        const osInfo = {
+          language: plus.os.language,
+          name: plus.os.name,
+          vendor: plus.os.vendor,
+          version: plus.os.version
+        };
+        alert('操作系统信息: ' + JSON.stringify(osInfo, null, 2));
+      } catch (e) {
+        alert('获取操作系统信息失败: ' + e.message);
+      }
+    }
+    
+    // 等待plusready事件
+    document.addEventListener('plusready', function() {
+      console.log('Plus环境已就绪');
+      plusReady = true;
+      
+      // 显示plus环境状态
+      const statusDiv = document.createElement('div');
+      statusDiv.style.cssText = 'background: #4CAF50; color: white; padding: 10px; margin: 10px 0; border-radius: 4px;';
+      statusDiv.innerHTML = '✅ Plus环境已就绪';
+      document.body.appendChild(statusDiv);
+      
+      // 显示设备信息
+      setTimeout(function() {
+        const infoDiv = document.createElement('div');
+        infoDiv.style.cssText = 'background: #2196F3; color: white; padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace;';
+        
+        try {
+          const deviceInfo = {
+            model: plus.device.model,
+            vendor: plus.device.vendor,
+            uuid: plus.device.uuid,
+            imei: plus.device.imei,
+            imsi: plus.device.imsi
+          };
+          infoDiv.innerHTML = '📱 设备信息: ' + JSON.stringify(deviceInfo, null, 2);
+          
+          // 添加网络信息显示
+          setTimeout(function() {
+            const networkInfoDiv = document.createElement('div');
+            networkInfoDiv.style.cssText = 'background: #9C27B0; color: white; padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace;';
+            
+            plus.networkinfo.getCurrentType().then(function(type) {
+              let typeStr = '未知';
+              switch(type) {
+                case 0: typeStr = '未知'; break;
+                case 1: typeStr = '无网络'; break;
+                case 2: typeStr = '有线网络'; break;
+                case 3: typeStr = 'Wi-Fi'; break;
+                case 4: typeStr = '2G'; break;
+                case 5: typeStr = '3G'; break;
+                case 6: typeStr = '4G'; break;
+                case 7: typeStr = '5G'; break;
+              }
+              
+              plus.networkinfo.isSetProxy().then(function(isSet) {
+                const networkInfo = {
+                  connectionType: typeStr,
+                  connectionTypeCode: type,
+                  proxySet: isSet
+                };
+                networkInfoDiv.innerHTML = '🌐 网络信息: ' + JSON.stringify(networkInfo, null, 2);
+              });
+            }).catch(function(e) {
+              networkInfoDiv.innerHTML = '❌ 获取网络信息失败: ' + e.message;
+            });
+            
+            document.body.appendChild(networkInfoDiv);
+          }, 500);
+          
+          // 添加操作系统信息显示
+          setTimeout(function() {
+            const osInfoDiv = document.createElement('div');
+            osInfoDiv.style.cssText = 'background: #FF9800; color: white; padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace;';
+            
+            try {
+              const osInfo = {
+                language: plus.os.language,
+                name: plus.os.name,
+                vendor: plus.os.vendor,
+                version: plus.os.version
+              };
+              osInfoDiv.innerHTML = '🖥️ 操作系统信息: ' + JSON.stringify(osInfo, null, 2);
+            } catch (e) {
+              osInfoDiv.innerHTML = '❌ 获取操作系统信息失败: ' + e.message;
+            }
+            
+            document.body.appendChild(osInfoDiv);
+          }, 1000);
+          
+        } catch (e) {
+          infoDiv.innerHTML = '❌ 获取设备信息失败: ' + e.message;
+        }
+        
+        document.body.appendChild(infoDiv);
+      }, 1000);
+    });
+    
+    // 如果plus已经存在，直接标记为就绪
+    if (window.plus) {
+      plusReady = true;
+      document.addEventListener('DOMContentLoaded', function() {
+        const statusDiv = document.createElement('div');
+        statusDiv.style.cssText = 'background: #4CAF50; color: white; padding: 10px; margin: 10px 0; border-radius: 4px;';
+        statusDiv.innerHTML = '✅ Plus环境已就绪 (预加载)';
+        document.body.appendChild(statusDiv);
+      });
+    }
+    
+    // 页面加载完成后检查plus环境
+    window.addEventListener('load', function() {
+      console.log('页面加载完成');
+      setTimeout(function() {
+        if (!plusReady && !window.plus) {
+          const errorDiv = document.createElement('div');
+          errorDiv.style.cssText = 'background: #f44336; color: white; padding: 10px; margin: 10px 0; border-radius: 4px;';
+          errorDiv.innerHTML = '❌ Plus环境未加载，请检查WebView配置';
+          document.body.appendChild(errorDiv);
+        }
+      }, 2000);
+    });
+  </script>
+</body>
+</html> 

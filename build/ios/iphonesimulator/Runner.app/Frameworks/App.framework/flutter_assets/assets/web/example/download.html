@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>Downloader 测试页面</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 12px; background: #f7f7f7; }
+    .task { background: #fff; border: 1px solid #eee; padding: 16px; margin-bottom: 16px; border-radius: 10px; box-shadow: 0 2px 8px #0001; }
+    .progress { height: 12px; background: #eee; border-radius: 6px; margin: 10px 0; }
+    .progress-bar { height: 12px; background: #4caf50; border-radius: 6px; transition: width 0.3s; }
+    .actions { margin-top: 10px; }
+    .actions button { margin-right: 10px; padding: 10px 18px; font-size: 1.1em; border-radius: 6px; border: none; background: #2196f3; color: #fff; }
+    .actions button:last-child { background: #f44336; }
+    .actions button:active { opacity: 0.8; }
+    #log { background: #fff; border: 1px solid #eee; padding: 10px; min-height: 40px; margin-top: 18px; border-radius: 8px; font-size: 1em; }
+    input[type="text"] { font-size: 1.1em; padding: 8px; border-radius: 6px; border: 1px solid #ccc; width: 90%; max-width: 400px; }
+    @media (max-width: 600px) {
+      .task { padding: 10px; }
+      .actions button { font-size: 1em; padding: 8px 12px; }
+      input[type="text"] { width: 98%; }
+    }
+  </style>
+</head>
+<body>
+  <h2 style="font-size:1.4em;">Downloader 测试页面</h2>
+  <div>
+    <input id="urlInput" type="text" placeholder="输入下载链接，如 https://example.com/file.zip" />
+    <button style="padding:10px 20px;font-size:1.1em;border-radius:6px;background:#4caf50;color:#fff;border:none;" onclick="createDownload()">下载</button>
+  </div>
+  <h3 style="font-size:1.1em;">下载任务列表</h3>
+  <div id="taskList"></div>
+  <h3 style="font-size:1.1em;">日志</h3>
+  <div id="log"></div>
+
+  <script>
+    function log(msg) {
+      const logDiv = document.getElementById('log');
+      logDiv.innerText += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    let allTasks = [];
+
+    async function createDownload() {
+      const url = document.getElementById('urlInput').value.trim();
+      if (!url) { log('请输入下载链接'); return; }
+      log('发起下载: ' + url);
+      try {
+        var dtask = plus.downloader.createDownload(url, {}, function(d, status){
+          if(status == 200){ 
+            log('Download success: ' + d.filename);
+            // 标记任务已成功，触发刷新，显示打开按钮
+            const t = allTasks.find(t => t.id === d.id);
+            if (t) t._downloadSuccess = true;
+            refreshTasks();
+          }else{
+            log('Download failed: ' + status); 
+          }
+        });
+        if (dtask.then) {
+          dtask.then(function(task) {
+            allTasks.push(task);
+            task.addEventListener("statechanged", function(download, state) {
+              log('任务['+(download.filename||download.url)+'] 状态变化: ' + state);
+              refreshTasks();
+            });
+            task.start();
+            refreshTasks();
+          });
+        } else {
+          allTasks.push(dtask);
+          dtask.addEventListener("statechanged", function(download, state) {
+            log('任务['+(download.filename||download.url)+'] 状态变化: ' + state);
+            refreshTasks();
+          });
+          dtask.start();
+          refreshTasks();
+        }
+      } catch (e) {
+        log('下载创建失败: ' + e);
+      }
+    }
+
+    // 同步后端任务状态到 allTasks
+    function refreshTasks() {
+      if (window.plus && window.plus.downloader) {
+        window.flutter_invoke('downloader.enumerate', {}).then(function(tasks) {
+          allTasks.forEach(function(localTask) {
+            const remote = tasks.find(t => t.id === localTask.id);
+            if (remote) {
+              Object.assign(localTask, remote);
+            }
+          });
+          renderTaskList();
+        });
+      } else {
+        renderTaskList();
+      }
+    }
+
+    
+
+    function renderTaskList() {
+      const list = document.getElementById('taskList');
+      list.innerHTML = '';
+      if (!allTasks || allTasks.length === 0) {
+        list.innerHTML = '<em>暂无任务</em>';
+        return;
+      }
+      allTasks.forEach(task => {
+        const percent = task.totalSize > 0 ? Math.floor(task.downloadedSize * 100 / task.totalSize) : 0;
+        const stateMap = {
+          '-2': '未开始', '0': '调度', '1': '请求', '2': '已连接', '3': '下载中', '4': '完成', '5': '已暂停', '-1': '失败'
+        };
+        const div = document.createElement('div');
+        div.className = 'task';
+        let html = `
+          <div style="font-size:1.1em;"><b>${task.filename || task.url}</b></div>
+          <div style="margin:6px 0;">状态: <b>${stateMap[task.state] || task.state}</b> <span style="float:right;">${percent}%</span></div>
+          <div class="progress"><div class="progress-bar" style="width:${percent}%;"></div></div>
+          <div style="color:#888;">已下载: ${task.downloadedSize || 0} / ${task.totalSize || 0}</div>
+          <div class="actions">
+            <button onclick="pauseTask('${task.id}')">暂停</button>
+            <button onclick="resumeTask('${task.id}')">恢复</button>
+            <button onclick="abortTask('${task.id}')">取消</button>
+        `;
+        // 只有下载成功才显示“打开”按钮
+        if ((task.state === 4 || task._downloadSuccess) && task.filename) {
+          html += `<button style="background:#4caf50;" onclick="plus.runtime.openFile('${task.filename}')">打开</button>`;
+        }
+        html += `</div>`;
+        div.innerHTML = html;
+        list.appendChild(div);
+      });
+    }
+
+    function findTaskById(id) {
+      return allTasks.find(t => t.id === id);
+    }
+    function pauseTask(id) {
+      const t = findTaskById(id); if (t) t.pause(); refreshTasks();
+    }
+    function resumeTask(id) {
+      const t = findTaskById(id); if (t) t.resume(); refreshTasks();
+    }
+    function abortTask(id) {
+      const t = findTaskById(id); if (t) t.abort(); refreshTasks();
+    }
+
+    // 定时刷新任务状态
+    setInterval(refreshTasks, 1200);
+    refreshTasks();
+  </script>
+</body>
+</html> 

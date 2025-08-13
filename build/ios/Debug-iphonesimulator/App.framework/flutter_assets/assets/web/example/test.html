@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>WebView 测试</title>
+  <style>
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+      margin: 0; 
+      padding: 16px; 
+      background: #f8f8f8; 
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 { color: #333; text-align: center; }
+    .status { 
+      background: #4CAF50; 
+      color: white; 
+      padding: 10px; 
+      margin: 10px 0; 
+      border-radius: 4px; 
+      text-align: center;
+    }
+    .info {
+      background: #2196F3; 
+      color: white; 
+      padding: 10px; 
+      margin: 10px 0; 
+      border-radius: 4px; 
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>WebView 测试页面</h1>
+    <div class="status">✅ 页面加载成功！</div>
+    <div class="info">
+      <strong>页面信息：</strong><br>
+      标题: WebView 测试<br>
+      时间: <span id="time"></span><br>
+      User Agent: <span id="ua"></span>
+    </div>
+    
+    <div id="plus-status" class="info" style="background: #FF9800;">
+      ⏳ 等待 Plus 环境...
+    </div>
+  </div>
+
+  <script>
+    // 显示基本信息
+    document.getElementById('time').textContent = new Date().toLocaleString();
+    document.getElementById('ua').textContent = navigator.userAgent;
+    
+    // 检查 Plus 环境
+    function checkPlus() {
+      if (window.plus) {
+        document.getElementById('plus-status').innerHTML = '✅ Plus 环境已就绪';
+        document.getElementById('plus-status').style.background = '#4CAF50';
+        
+        // 显示 Plus 对象信息
+        const plusInfo = document.createElement('div');
+        plusInfo.className = 'info';
+        plusInfo.innerHTML = '<strong>Plus 对象：</strong><br>' + 
+          'plus.webview: ' + (window.plus.webview ? '✅' : '❌') + '<br>' +
+          'plus.device: ' + (window.plus.device ? '✅' : '❌') + '<br>' +
+          'plus.runtime: ' + (window.plus.runtime ? '✅' : '❌');
+        document.querySelector('.container').appendChild(plusInfo);
+      } else {
+        setTimeout(checkPlus, 100);
+      }
+    }
+    
+    // 页面加载完成后开始检查
+    window.addEventListener('load', function() {
+      console.log('测试页面加载完成');
+      checkPlus();
+    });
+  </script>
+</body>
+</html>

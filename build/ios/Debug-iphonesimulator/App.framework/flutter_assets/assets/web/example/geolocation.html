@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geolocation 测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .container {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        h2 {
+            color: #555;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .result {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        .info {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        select, input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.active {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        .status.inactive {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <h1>Geolocation 测试页面</h1>
+    
+    <div class="container">
+        <h2>获取当前位置</h2>
+        <div class="form-group">
+            <label for="coordsType">坐标系类型:</label>
+            <select id="coordsType">
+                <option value="wgs84">WGS84 (GPS坐标系)</option>
+                <option value="gcj02">GCJ02 (国测局坐标系)</option>
+                <option value="bd09">BD09 (百度坐标系)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="enableHighAccuracy">
+                <input type="checkbox" id="enableHighAccuracy"> 启用高精度
+            </label>
+        </div>
+        <div class="form-group">
+            <label for="timeout">超时时间 (毫秒):</label>
+            <input type="number" id="timeout" value="10000" min="1000">
+        </div>
+        <div class="form-group">
+            <label for="maximumAge">最大缓存时间 (毫秒):</label>
+            <input type="number" id="maximumAge" value="0" min="0">
+        </div>
+        <div class="form-group">
+            <label for="geocode">
+                <input type="checkbox" id="geocode" checked> 解析地址
+            </label>
+        </div>
+        <button id="getCurrentPositionBtn">获取当前位置</button>
+        <div id="currentPositionResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="container">
+        <h2>监听位置变化</h2>
+        <div class="form-group">
+            <label for="watchCoordsType">坐标系类型:</label>
+            <select id="watchCoordsType">
+                <option value="wgs84">WGS84 (GPS坐标系)</option>
+                <option value="gcj02">GCJ02 (国测局坐标系)</option>
+                <option value="bd09">BD09 (百度坐标系)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="watchEnableHighAccuracy">
+                <input type="checkbox" id="watchEnableHighAccuracy"> 启用高精度
+            </label>
+        </div>
+        <div class="form-group">
+            <label for="watchTimeout">超时时间 (毫秒):</label>
+            <input type="number" id="watchTimeout" value="10000" min="1000">
+        </div>
+        <div class="form-group">
+            <label for="watchMaximumAge">最大缓存时间 (毫秒):</label>
+            <input type="number" id="watchMaximumAge" value="0" min="0">
+        </div>
+        <div class="form-group">
+            <label for="watchGeocode">
+                <input type="checkbox" id="watchGeocode" checked> 解析地址
+            </label>
+        </div>
+        <button id="startWatchBtn">开始监听</button>
+        <button id="stopWatchBtn" disabled>停止监听</button>
+        <div id="watchStatus" class="status inactive">未监听</div>
+        <div id="watchPositionResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="container">
+        <h2>返回首页</h2>
+        <button id="backToHomeBtn">返回首页</button>
+    </div>
+
+    <script>
+        document.addEventListener('plusready', function() {
+            console.log('Plus API 已就绪');
+            
+            // 获取当前位置
+            document.getElementById('getCurrentPositionBtn').addEventListener('click', function() {
+                const resultDiv = document.getElementById('currentPositionResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result info';
+                resultDiv.textContent = '正在获取位置...';
+                
+                const options = {
+                    coordsType: document.getElementById('coordsType').value,
+                    enableHighAccuracy: document.getElementById('enableHighAccuracy').checked,
+                    timeout: parseInt(document.getElementById('timeout').value),
+                    maximumAge: parseInt(document.getElementById('maximumAge').value),
+                    geocode: document.getElementById('geocode').checked
+                };
+                
+                plus.geolocation.getCurrentPosition(function(position) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = JSON.stringify(position, null, 2);
+                }, function(error) {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = '获取位置失败: ' + error.message + ' (错误码: ' + error.code + ')';
+                }, options);
+            });
+            
+            // 监听位置变化
+            let watchId = null;
+            const watchStatusDiv = document.getElementById('watchStatus');
+            const startWatchBtn = document.getElementById('startWatchBtn');
+            const stopWatchBtn = document.getElementById('stopWatchBtn');
+            const watchResultDiv = document.getElementById('watchPositionResult');
+            
+            startWatchBtn.addEventListener('click', function() {
+                watchResultDiv.style.display = 'block';
+                watchResultDiv.className = 'result info';
+                watchResultDiv.textContent = '正在开始监听...';
+                
+                const options = {
+                    coordsType: document.getElementById('watchCoordsType').value,
+                    enableHighAccuracy: document.getElementById('watchEnableHighAccuracy').checked,
+                    timeout: parseInt(document.getElementById('watchTimeout').value),
+                    maximumAge: parseInt(document.getElementById('watchMaximumAge').value),
+                    geocode: document.getElementById('watchGeocode').checked
+                };
+                
+                plus.geolocation.watchPosition(function(position) {
+                    watchResultDiv.className = 'result success';
+                    watchResultDiv.textContent = '位置更新: ' + new Date().toLocaleTimeString() + '\n\n' + JSON.stringify(position, null, 2);
+                }, function(error) {
+                    watchResultDiv.className = 'result error';
+                    watchResultDiv.textContent = '监听位置失败: ' + error.message + ' (错误码: ' + error.code + ')';
+                }, options).then(function(id) {
+                    watchId = id;
+                    watchStatusDiv.textContent = '监听中 (ID: ' + id + ')';
+                    watchStatusDiv.className = 'status active';
+                    startWatchBtn.disabled = true;
+                    stopWatchBtn.disabled = false;
+                }).catch(function(error) {
+                    watchResultDiv.className = 'result error';
+                    watchResultDiv.textContent = '开始监听失败: ' + error.message;
+                });
+            });
+            
+            stopWatchBtn.addEventListener('click', function() {
+                if (watchId !== null) {
+                    plus.geolocation.clearWatch(watchId).then(function(success) {
+                        if (success) {
+                            watchStatusDiv.textContent = '未监听';
+                            watchStatusDiv.className = 'status inactive';
+                            startWatchBtn.disabled = false;
+                            stopWatchBtn.disabled = true;
+                            watchResultDiv.className = 'result info';
+                            watchResultDiv.textContent = '已停止监听';
+                            watchId = null;
+                        } else {
+                            watchResultDiv.className = 'result error';
+                            watchResultDiv.textContent = '停止监听失败';
+                        }
+                    }).catch(function(error) {
+                        watchResultDiv.className = 'result error';
+                        watchResultDiv.textContent = '停止监听失败: ' + error.message;
+                    });
+                }
+            });
+            
+            // 返回首页
+            document.getElementById('backToHomeBtn').addEventListener('click', function() {
+                window.location.href = 'home.html';
+            });
+        });
+    </script>
+</body>
+</html>

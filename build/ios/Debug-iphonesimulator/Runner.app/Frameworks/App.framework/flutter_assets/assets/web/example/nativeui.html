@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>plus.nativeUI 测试</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 20px; 
+      padding: 0;
+      background-color: #f5f5f5;
+    }
+    h2 {
+      font-size: 1.5em;
+      margin: 20px 0 10px 0;
+      color: #333;
+      border-bottom: 2px solid #007AFF;
+      padding-bottom: 5px;
+    }
+    .section {
+      background: white;
+      margin: 15px 0;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button { 
+      margin: 8px 5px 8px 0; 
+      padding: 12px 16px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      background-color: #007AFF;
+      color: white;
+      cursor: pointer;
+      min-width: 120px;
+    }
+    button:active {
+      background-color: #0056b3;
+    }
+    button.secondary {
+      background-color: #6c757d;
+    }
+    button.danger {
+      background-color: #dc3545;
+    }
+    button.success {
+      background-color: #28a745;
+    }
+    .result { 
+      margin: 10px 0; 
+      color: #333; 
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      border-left: 4px solid #007AFF;
+      min-height: 20px;
+      font-family: monospace;
+    }
+    .input-group {
+      margin: 10px 0;
+    }
+    .input-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .input-group input, .input-group select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    @media (max-width: 768px) {
+      body {
+        margin: 10px;
+      }
+      button {
+        width: 100%;
+        margin: 5px 0;
+        padding: 15px;
+        font-size: 18px;
+      }
+    }
+    .image-preview {
+      max-width: 100px;
+      max-height: 100px;
+      margin: 5px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1 style="text-align: center; color: #007AFF;">plus.nativeUI API 测试</h1>
+
+  <!-- 对话框类测试 -->
+  <div class="section">
+    <h2>对话框类</h2>
+    
+    <button onclick="testActionSheet()">弹出选择框 (ActionSheet)</button>
+    <button onclick="testAlert()" class="secondary">提示对话框 (Alert)</button>
+    <button onclick="testConfirm()" class="danger">确认对话框 (Confirm)</button>
+    <button onclick="testPrompt()" class="success">输入对话框 (Prompt)</button>
+    <div id="dialogResult" class="result">等待测试...</div>
+  </div>
+
+  <!-- Toast 提示类测试 -->
+  <div class="section">
+    <h2>Toast 提示</h2>
+    
+    <button onclick="testToastShort()">短时间 Toast</button>
+    <button onclick="testToastLong()" class="secondary">长时间 Toast</button>
+    <button onclick="testToastCustom()" class="success">自定义样式 Toast</button>
+    <button onclick="testCloseToast()" class="danger">关闭 Toast</button>
+    <div id="toastResult" class="result">等待测试...</div>
+  </div>
+
+  <!-- 等待对话框测试 -->
+  <div class="section">
+    <h2>等待对话框</h2>
+    
+    <button onclick="testShowWaiting()">显示等待框</button>
+    <button onclick="testCloseWaiting()" class="danger">关闭等待框</button>
+    <div id="waitingResult" class="result">等待测试...</div>
+  </div>
+
+  <!-- 日期时间选择器测试 -->
+  <div class="section">
+    <h2>日期时间选择</h2>
+    
+    <button onclick="testPickDate()">选择日期</button>
+    <button onclick="testPickTime()" class="secondary">选择时间</button>
+    <div id="pickerResult" class="result">等待测试...</div>
+  </div>
+
+  <!-- 图片预览测试 -->
+  <div class="section">
+    <h2>图片预览</h2>
+    
+    <div>
+      <img src="https://picsum.photos/200/300?random=1" class="image-preview" alt="示例图片1">
+      <img src="https://picsum.photos/200/300?random=2" class="image-preview" alt="示例图片2">
+      <img src="https://picsum.photos/200/300?random=3" class="image-preview" alt="示例图片3">
+    </div>
+    <button onclick="testPreviewImage()">预览图片画廊</button>
+    <button onclick="testClosePreview()" class="danger">关闭预览</button>
+    <div id="imageResult" class="result">等待测试...</div>
+  </div>
+
+  <!-- UI 样式设置测试 -->
+  <div class="section">
+    <h2>UI 样式设置</h2>
+    
+    <button onclick="testSetUIStyleLight()">设置浅色模式</button>
+    <button onclick="testSetUIStyleDark()" class="secondary">设置深色模式</button>
+    <button onclick="testGetUIStyle()" class="success">获取当前样式</button>
+    <div id="styleResult" class="result">等待测试...</div>
+  </div>
+
+  <script>
+    // 确保 plus.nativeUI 可用
+    function checkPlusReady() {
+      if (typeof plus === 'undefined' || typeof plus.nativeUI === 'undefined') {
+        console.warn('plus.nativeUI not available, adding mock implementation');
+        // 在普通浏览器中添加模拟实现
+        window.plus = window.plus || {};
+        window.plus.nativeUI = {
+          actionSheet: function(options, callback) {
+            setTimeout(function() {
+              if (callback) callback({index: 0});
+            }, 500);
+          },
+          alert: function(message, callback) {
+            alert(message);
+            if (callback) callback();
+          },
+          confirm: function(message, callback) {
+            var result = confirm(message);
+            if (callback) callback({index: result ? 0 : 1});
+          },
+          prompt: function(message, callback) {
+            var result = prompt(message);
+            if (callback) callback({index: result ? 0 : 1, value: result || ''});
+          },
+          toast: function(message, options) {
+            console.log('Toast:', message, options);
+          },
+          closeToast: function() {
+            console.log('Close toast');
+          },
+          showWaiting: function(message, options) {
+            console.log('Show waiting:', message);
+            return {
+              setTitle: function(title) { console.log('Set title:', title); },
+              close: function() { console.log('Close waiting'); }
+            };
+          },
+          closeWaiting: function() {
+            console.log('Close waiting');
+          },
+          pickDate: function(successCallback, errorCallback, options) {
+            setTimeout(function() {
+              if (successCallback) {
+                successCallback({
+                  date: new Date().toISOString(),
+                  year: 2024,
+                  month: 1,
+                  day: 1
+                });
+              }
+            }, 500);
+          },
+          pickTime: function(successCallback, errorCallback, options) {
+            setTimeout(function() {
+              if (successCallback) {
+                successCallback({
+                  time: '12:00',
+                  hour: 12,
+                  minute: 0
+                });
+              }
+            }, 500);
+          },
+          previewImage: function(images, options) {
+            console.log('Preview images:', images, options);
+          },
+          closePreviewImage: function() {
+            console.log('Close preview');
+          },
+          setUIStyle: function(style) {
+            console.log('Set UI style:', style);
+          },
+          getUIStyle: function() {
+            return 'light';
+          }
+        };
+      }
+    }
+
+    // 初始化检查
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', checkPlusReady);
+    } else {
+      checkPlusReady();
+    }
+
+    // 等待 plusready 事件
+    document.addEventListener('plusready', function() {
+      console.log('Plus framework ready');
+      checkPlusReady();
+    });
+
+    // 对话框测试函数
+    function testActionSheet() {
+      const options = {
+        title: '请选择操作',
+        cancel: '取消',
+        buttons: [
+          {title: '拍照'},
+          {title: '从相册选择'},
+          {title: '查看大图'}
+        ]
+      };
+      
+      plus.nativeUI.actionSheet(options, function(result) {
+        document.getElementById('dialogResult').innerText = 'ActionSheet 结果: ' + JSON.stringify(result);
+      });
+    }
+
+    function testAlert() {
+      plus.nativeUI.alert('这是一个提示消息', function() {
+        document.getElementById('dialogResult').innerText = 'Alert 回调执行完成';
+      }, '提示', '确定');
+    }
+
+    function testConfirm() {
+      plus.nativeUI.confirm('确定要删除这个文件吗？', function(result) {
+        document.getElementById('dialogResult').innerText = 'Confirm 结果: ' + JSON.stringify(result);
+      }, {
+        title: '确认操作',
+        buttons: ['删除', '取消']
+      });
+    }
+
+    function testPrompt() {
+      plus.nativeUI.prompt('请输入您的姓名', function(result) {
+        document.getElementById('dialogResult').innerText = 'Prompt 结果: ' + JSON.stringify(result);
+      }, '输入信息', '请输入姓名', ['确定', '取消']);
+    }
+
+    // Toast 测试函数
+    function testToastShort() {
+      plus.nativeUI.toast('这是一个短时间提示', {duration: 'short'});
+      document.getElementById('toastResult').innerText = '短时间 Toast 已显示';
+    }
+
+    function testToastLong() {
+      plus.nativeUI.toast('这是一个长时间提示', {duration: 'long'});
+      document.getElementById('toastResult').innerText = '长时间 Toast 已显示';
+    }
+
+    function testToastCustom() {
+      plus.nativeUI.toast('自定义样式提示', {
+        duration: 'long',
+        position: 'center',
+        style: {
+          backgroundColor: '#FF6B6B',
+          color: '#FFFFFF',
+          fontSize: 16
+        }
+      });
+      document.getElementById('toastResult').innerText = '自定义样式 Toast 已显示';
+    }
+
+    function testCloseToast() {
+      plus.nativeUI.closeToast();
+      document.getElementById('toastResult').innerText = 'Toast 已关闭';
+    }
+
+    // 等待对话框测试函数
+    let currentWaiting = null;
+
+    function testShowWaiting() {
+      currentWaiting = plus.nativeUI.showWaiting('加载中，请稍候...', {
+        style: {
+          backgroundColor: '#FFFFFF',
+          color: '#333333'
+        },
+        loading: {
+          type: 'circular',
+          color: '#007AFF'
+        }
+      });
+      
+      document.getElementById('waitingResult').innerText = '等待框已显示';
+      
+      // 3秒后自动更新标题
+      setTimeout(function() {
+        if (currentWaiting && currentWaiting.setTitle) {
+          currentWaiting.setTitle('即将完成...');
+        }
+      }, 3000);
+    }
+
+    function testCloseWaiting() {
+      if (currentWaiting && currentWaiting.close) {
+        currentWaiting.close();
+      } else {
+        plus.nativeUI.closeWaiting();
+      }
+      document.getElementById('waitingResult').innerText = '等待框已关闭';
+      currentWaiting = null;
+    }
+
+    // 日期时间选择测试函数
+    function testPickDate() {
+      plus.nativeUI.pickDate(
+        function(result) {
+          document.getElementById('pickerResult').innerText = '选择的日期: ' + JSON.stringify(result);
+        },
+        function(error) {
+          document.getElementById('pickerResult').innerText = '日期选择取消或出错: ' + JSON.stringify(error);
+        },
+        {
+          minDate: new Date(2020, 0, 1),
+          maxDate: new Date(2030, 11, 31),
+          date: new Date()
+        }
+      );
+    }
+
+    function testPickTime() {
+      plus.nativeUI.pickTime(
+        function(result) {
+          document.getElementById('pickerResult').innerText = '选择的时间: ' + JSON.stringify(result);
+        },
+        function(error) {
+          document.getElementById('pickerResult').innerText = '时间选择取消或出错: ' + JSON.stringify(error);
+        },
+        {
+          is24Hour: true,
+          time: {hour: 12, minute: 0}
+        }
+      );
+    }
+
+    // 图片预览测试函数
+    function testPreviewImage() {
+      const images = [
+        'https://picsum.photos/800/600?random=1',
+        'https://picsum.photos/800/600?random=2',
+        'https://picsum.photos/800/600?random=3',
+        'https://picsum.photos/800/600?random=4',
+        'https://picsum.photos/800/600?random=5'
+      ];
+      
+      plus.nativeUI.previewImage(images, {
+        current: 0,
+        loop: true,
+        indicator: true
+      });
+      
+      document.getElementById('imageResult').innerText = '已打开图片预览，共 ' + images.length + ' 张图片';
+    }
+
+    function testClosePreview() {
+      plus.nativeUI.closePreviewImage();
+      document.getElementById('imageResult').innerText = '图片预览已关闭';
+    }
+
+    // UI样式测试函数
+    function testSetUIStyleLight() {
+      plus.nativeUI.setUIStyle('light');
+      document.getElementById('styleResult').innerText = 'UI样式已设置为浅色模式';
+    }
+
+    function testSetUIStyleDark() {
+      plus.nativeUI.setUIStyle('dark');
+      document.getElementById('styleResult').innerText = 'UI样式已设置为深色模式';
+    }
+
+    function testGetUIStyle() {
+      try {
+        const style = plus.nativeUI.getUIStyle();
+        if (style && style.then) {
+          // 如果返回 Promise
+          style.then(function(result) {
+            document.getElementById('styleResult').innerText = '当前UI样式: ' + result;
+          });
+        } else {
+          // 如果直接返回值
+          document.getElementById('styleResult').innerText = '当前UI样式: ' + style;
+        }
+      } catch (e) {
+        document.getElementById('styleResult').innerText = '获取UI样式出错: ' + e.message;
+      }
+    }
+
+    // 页面加载完成提示
+    window.addEventListener('load', function() {
+      console.log('nativeUI测试页面加载完成');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>plus.android 测试</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; padding: 16px; background: #f8f8f8; }
+    button { display: block; width: 100%; max-width: 320px; margin: 12px auto; padding: 16px 0; font-size: 18px; border-radius: 8px; border: none; background: #3DDC84; color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.04); cursor: pointer; transition: background 0.2s; }
+    button:active { background: #2FB868; }
+    .result { background: #fff; padding: 12px; margin: 12px auto; max-width: 320px; border-radius: 8px; border-left: 4px solid #3DDC84; word-break: break-all; }
+    .error { background: #fff; padding: 12px; margin: 12px auto; max-width: 320px; border-radius: 8px; border-left: 4px solid #FF4444; word-break: break-all; color: #FF4444; }
+    .info { background: #fff; padding: 12px; margin: 12px auto; max-width: 320px; border-radius: 8px; border-left: 4px solid #2196F3; word-break: break-all; color: #2196F3; }
+  </style>
+</head>
+<body>
+  <h1>plus.android 测试</h1>
+  <button onclick="testImportClass()">测试 importClass</button>
+  <button onclick="testNewObject()">测试 newObject</button>
+  <button onclick="testInvoke()">测试 invoke</button>
+  <button onclick="testGetAttribute()">测试 getAttribute</button>
+  <button onclick="testSetAttribute()">测试 setAttribute</button>
+  <button onclick="testRuntimeMainActivity()">测试 runtimeMainActivity</button>
+  <button onclick="testCurrentWebview()">测试 currentWebview</button>
+  <button onclick="testRequestPermissions()">测试 requestPermissions</button>
+  <button onclick="testAutoCollection()">测试 autoCollection</button>
+  <button onclick="testGetAvailMem()">测试 getAvailMem</button>
+  <button onclick="testGetAvailMemExample()">测试获取可用内存示例</button>
+  
+  <div id="results"></div>
+  
+  <script>
+    let plusReady = false;
+    
+    function checkPlusReady() {
+      if (!plusReady) {
+        alert('Plus环境未就绪，请等待页面完全加载');
+        return false;
+      }
+      return true;
+    }
+    
+    function addResult(content, isError = false, isInfo = false) {
+      const resultsDiv = document.getElementById('results');
+      const div = document.createElement('div');
+      if (isError) {
+        div.className = 'error';
+      } else if (isInfo) {
+        div.className = 'info';
+      } else {
+        div.className = 'result';
+      }
+      div.textContent = content;
+      resultsDiv.appendChild(div);
+    }
+    
+    function testImportClass() {
+      if (!checkPlusReady()) return;
+      try {
+        plus.android.importClass("android.content.Context")
+          .then(function(result) {
+            addResult('importClass 成功: ' + JSON.stringify(result));
+          })
+          .catch(function(error) {
+            addResult('importClass 失败: ' + error.message, true);
+          });
+      } catch (e) {
+        addResult('调用 importClass 失败: ' + e.message, true);
+      }
+    }
+    
+    function testNewObject() {
+      if (!checkPlusReady()) return;
+      try {
+        plus.android.newObject("android.app.ActivityManager\$MemoryInfo")
+          .then(function(result) {
+            addResult('newObject 成功: ' + JSON.stringify(result));
+          })
+          .catch(function(error) {
+            addResult('newObject 失败: ' + error.message, true);
+          });
+      } catch (e) {
+        addResult('调用 newObject 失败: ' + e.message, true);
+      }
+    }
+    
+    function testInvoke() {
+      if (!checkPlusReady()) return;
+      try {
+        const obj = { className: "test" };
+        plus.android.invoke(obj, "testMethod", "arg1", "arg2")
+          .then(function(result) {
+            addResult('invoke 成功: ' + JSON.stringify(result));
+          })
+          .catch(function(error) {
+            addResult('invoke 失败: ' + error.message, true);
+          });
+      } catch (e) {
+        addResult('调用 invoke 失败: ' + e.message, true);
+      }
+    }
+    
+    function testGetAttribute() {
+      if (!checkPlusReady()) return;
+      try {
+        const obj = { className: "test", fieldName: "testField" };
+        plus.android.getAttribute(obj, "testField")
+          .then(function(result) {
+            addResult('getAttribute 成功: ' + JSON.stringify(result));
+          })
+          .catch(function(error) {
+            addResult('getAttribute 失败: ' + error.message, true);
+          });
+      } catch (e) {
+        addResult('调用 getAttribute 失败: ' + e.message, true);
+      }
+    }
+    
+    function testSetAttribute() {
+      if (!checkPlusReady()) return;
+      try {
+        const obj = { className: "test" };
+        plus.android.setAttribute(obj, "testField", "testValue")
+          .then(function(result) {
+            addResult('setAttribute 成功: ' + JSON.stringify(result));
+          })
+          .catch(function(error) {
+            addResult('setAttribute 失败: ' + error.message, true);
+          });
+      } catch (e) {
+        addResult('调用 setAttribute 失败: ' + e.message, true);
+      }
+    }
+    
+    function testRuntimeMainActivity() {
+      if (!checkPlusReady()) return;
+      try {
+        plus.android.runtimeMainActivity()
+          .then(function(result) {
+            addResult('runtimeMainActivity 成功: ' + result);
+          })
+          .catch(function(error) {
+            addResult('runtimeMainActivity 失败: ' + error.message, true);
+          });
+      } catch (e) {
+        addResult('调用 runtimeMainActivity 失败: ' + e.message, true);
+      }
+    }
+    
+    function testCurrentWebview() {
+      if (!checkPlusReady()) return;
+      try {
+        plus.android.currentWebview()
+          .then(function(result) {
+            addResult('currentWebview 成功: ' + result);
+          })
+          .catch(function(error) {
+            addResult('currentWebview 失败: ' + error.message, true);
+          });
+      } catch (e) {
+        addResult('调用 currentWebview 失败: ' + e.message, true);
+      }
+    }
+    
+    function testRequestPermissions() {
+      if (!checkPlusReady()) return;
+      try {
+        plus.android.requestPermissions(["android.permission.CAMERA", "android.permission.READ_EXTERNAL_STORAGE"], function(granted) {
+          addResult('requestPermissions 结果: ' + (granted ? '已授权' : '未授权'), false, true);
+        });
+      } catch (e) {
+        addResult('调用 requestPermissions 失败: ' + e.message, true);
+      }
+    }
+    
+    function testAutoCollection() {
+      if (!checkPlusReady()) return;
+      try {
+        const instance = { className: "test" };
+        plus.android.autoCollection(instance)
+          .then(function(result) {
+            addResult('autoCollection 成功: ' + JSON.stringify(result));
+          })
+          .catch(function(error) {
+            addResult('autoCollection 失败: ' + error.message, true);
+          });
+      } catch (e) {
+        addResult('调用 autoCollection 失败: ' + e.message, true);
+      }
+    }
+    
+    function testGetAvailMem() {
+      if (!checkPlusReady()) return;
+      try {
+        plus.android.getAvailMem()
+          .then(function(result) {
+            addResult('getAvailMem 成功: ' + result + ' bytes');
+          })
+          .catch(function(error) {
+            addResult('getAvailMem 失败: ' + error.message, true);
+          });
+      } catch (e) {
+        addResult('调用 getAvailMem 失败: ' + e.message, true);
+      }
+    }
+    
+    function testGetAvailMemExample() {
+      if (!checkPlusReady()) return;
+      try {
+        // 使用全局函数 getAvailMem
+        if (typeof window.getAvailMem === 'function') {
+          window.getAvailMem()
+            .then(function(result) {
+              addResult('获取可用内存示例成功: ' + result + ' bytes (' + (result / 1024 / 1024).toFixed(2) + ' MB)', false, true);
+            })
+            .catch(function(error) {
+              addResult('获取可用内存示例失败: ' + error.message, true);
+            });
+        } else {
+          addResult('getAvailMem 函数未定义', true);
+        }
+      } catch (e) {
+        addResult('调用获取可用内存示例失败: ' + e.message, true);
+      }
+    }
+    
+    // 等待plusready事件
+    document.addEventListener('plusready', function() {
+      console.log('Plus环境已就绪');
+      plusReady = true;
+      
+      // 显示plus环境状态
+      const statusDiv = document.createElement('div');
+      statusDiv.style.cssText = 'background: #3DDC84; color: white; padding: 10px; margin: 10px 0; border-radius: 4px;';
+      statusDiv.innerHTML = '✅ Plus环境已就绪';
+      document.body.insertBefore(statusDiv, document.getElementById('results'));
+      
+      // 显示平台信息
+      setTimeout(function() {
+        const infoDiv = document.createElement('div');
+        infoDiv.style.cssText = 'background: #2196F3; color: white; padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace;';
+        
+        try {
+          const platformInfo = {
+            os: plus.os.name,
+            version: plus.os.version,
+            isAndroid: plus.os.name === 'Android'
+          };
+          infoDiv.innerHTML = '📱 平台信息: ' + JSON.stringify(platformInfo, null, 2);
+        } catch (e) {
+          infoDiv.innerHTML = '❌ 获取平台信息失败: ' + e.message;
+        }
+        
+        document.body.insertBefore(infoDiv, document.getElementById('results'));
+      }, 500);
+    });
+    
+    // 如果plus已经存在，直接标记为就绪
+    if (window.plus) {
+      plusReady = true;
+      document.addEventListener('DOMContentLoaded', function() {
+        const statusDiv = document.createElement('div');
+        statusDiv.style.cssText = 'background: #3DDC84; color: white; padding: 10px; margin: 10px 0; border-radius: 4px;';
+        statusDiv.innerHTML = '✅ Plus环境已就绪 (预加载)';
+        document.body.insertBefore(statusDiv, document.getElementById('results'));
+      });
+    }
+    
+    // 页面加载完成后检查plus环境
+    window.addEventListener('load', function() {
+      console.log('页面加载完成');
+      setTimeout(function() {
+        if (!plusReady && !window.plus) {
+          const errorDiv = document.createElement('div');
+          errorDiv.style.cssText = 'background: #f44336; color: white; padding: 10px; margin: 10px 0; border-radius: 4px;';
+          errorDiv.innerHTML = '❌ Plus环境未加载，请检查WebView配置';
+          document.body.insertBefore(errorDiv, document.getElementById('results'));
+        }
+      }, 2000);
+    });
+  </script>
+</body>
+</html>

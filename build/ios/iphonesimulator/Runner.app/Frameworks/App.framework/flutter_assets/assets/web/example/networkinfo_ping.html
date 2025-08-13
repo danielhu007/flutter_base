@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>plus.networkinfo.ping 测试</title>
+  <style>
+    body { font-family: sans-serif; padding: 2em; margin: 0; background: #fafafa; }
+    #container { max-width: 400px; margin: 0 auto; box-shadow: 0 2px 8px #0001; background: #fff; border-radius: 12px; padding: 2em 1em; }
+    h2 { font-size: 1.3em; margin-bottom: 1em; text-align: center; }
+    label { display: flex; align-items: center; gap: 0.5em; margin-bottom: 1em; }
+    input[type="text"], input[type="url"] { flex: 1; font-size: 1em; padding: 0.5em; border-radius: 6px; border: 1px solid #ccc; }
+    button { font-size: 1em; padding: 0.6em 1.2em; margin-right: 0.5em; border-radius: 6px; border: none; background: #43a047; color: #fff; cursor: pointer; transition: background 0.2s; }
+    button:last-child { background: #888; }
+    button:active { opacity: 0.8; }
+    #result { font-size: 2em; margin-top: 1em; text-align: center; }
+    .green { color: #43a047; }
+    .yellow { color: #fbc02d; }
+    .red { color: #e53935; }
+    .gray { color: #888; }
+    @media (max-width: 500px) {
+      #container { max-width: 98vw; padding: 1em 0.5em; }
+      h2 { font-size: 1.1em; }
+      #result { font-size: 1.3em; }
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <h2>plus.networkinfo.ping 测试</h2>
+    <label>Ping URL:
+      <input id="url" type="url" value="https://www.baidu.com" style="width: 100%;" />
+    </label>
+    <div style="display: flex; justify-content: center; gap: 0.5em;">
+      <button onclick="startPing()">开始</button>
+      <button onclick="stopPing()">停止</button>
+    </div>
+    <div id="result" class="gray">等待测试...</div>
+  </div>
+  <script>
+    let timer = null;
+    function getColor(ms) {
+      if (ms < 0) return 'gray';
+      if (ms < 200) return 'green';
+      if (ms < 600) return 'yellow';
+      if (ms < 2000) return 'red';
+      return 'gray';
+    }
+    function showResult(ms) {
+      const result = document.getElementById('result');
+      const color = getColor(ms);
+      if (ms < 0) {
+        result.textContent = 'Ping 失败';
+        result.className = 'gray';
+      } else {
+        result.textContent = `延迟: ${ms} ms`;
+        result.className = color;
+      }
+    }
+    function pingOnce() {
+      const url = document.getElementById('url').value;
+      // 检查 plus 和 plus.networkinfo 是否存在
+      if (!plus || !plus.networkinfo) {
+        alert('plus.networkinfo 未注入');
+        return;
+      }
+      plus.networkinfo.ping(url).then(showResult).catch(() => showResult(-1));
+      
+    }
+    function startPing() {
+      stopPing();
+      pingOnce();
+      timer = setInterval(pingOnce, 2000);
+    }
+    function stopPing() {
+      if (timer) clearInterval(timer);
+      timer = null;
+    }
+    // 支持回车直接开始
+    document.getElementById('url').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') startPing();
+    });
+  </script>
+</body>
+</html>

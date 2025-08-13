@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>plus.networkinfo.ping 测试</title>
+  <style>
+    body { font-family: sans-serif; padding: 2em; }
+    #result { font-size: 2em; margin-top: 1em; }
+    .green { color: #43a047; }
+    .yellow { color: #fbc02d; }
+    .red { color: #e53935; }
+    .gray { color: #888; }
+  </style>
+</head>
+<body>
+  <h2>plus.networkinfo.ping 测试</h2>
+  <label>Ping URL: <input id="url" value="https://api.dev.flutterbase.com" style="width: 320px;" /></label>
+  <button onclick="startPing()">开始</button>
+  <button onclick="stopPing()">停止</button>
+  <div id="result" class="gray">等待测试...</div>
+  <script>
+    let timer = null;
+    function getColor(ms) {
+      if (ms < 0) return 'gray';
+      if (ms < 200) return 'green';
+      if (ms < 600) return 'yellow';
+      if (ms < 2000) return 'red';
+      return 'gray';
+    }
+    function showResult(ms) {
+      const result = document.getElementById('result');
+      const color = getColor(ms);
+      if (ms < 0) {
+        result.textContent = 'Ping 失败';
+        result.className = 'gray';
+      } else {
+        result.textContent = `延迟: ${ms} ms`;
+        result.className = color;
+      }
+    }
+    function pingOnce() {
+      const url = document.getElementById('url').value;
+      if (window.plus && window.plus.networkinfo && window.plus.networkinfo.ping) {
+        window.plus.networkinfo.ping(url).then(showResult);
+      } else {
+        showResult(-1);
+      }
+    }
+    function startPing() {
+      stopPing();
+      pingOnce();
+      timer = setInterval(pingOnce, 2000);
+    }
+    function stopPing() {
+      if (timer) clearInterval(timer);
+      timer = null;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>SQLite 测试页面</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 12px; background: #f7f7f7; }
+    .section { background: #fff; border: 1px solid #eee; padding: 16px; margin-bottom: 16px; border-radius: 10px; box-shadow: 0 2px 8px #0001; }
+    .section h3 { margin: 0 0 10px 0; font-size: 1.1em; }
+    .row { margin-bottom: 10px; }
+    input, textarea { font-size: 1.1em; padding: 8px; border-radius: 6px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
+    button { margin-right: 10px; padding: 10px 18px; font-size: 1.1em; border-radius: 6px; border: none; background: #2196f3; color: #fff; margin-top: 8px; }
+    button:last-child { background: #f44336; }
+    button:active { opacity: 0.8; }
+    #log { background: #fff; border: 1px solid #eee; padding: 10px; min-height: 40px; margin-top: 18px; border-radius: 8px; font-size: 1em; }
+    @media (max-width: 600px) {
+      .section { padding: 10px; }
+      button { font-size: 1em; padding: 8px 12px; }
+      input, textarea { font-size: 1em; }
+    }
+  </style>
+</head>
+<body>
+  <h2 style="font-size:1.4em;">SQLite 测试页面</h2>
+  <div class="section">
+    <h3>数据库操作</h3>
+    <div class="row">
+      <input id="dbName" type="text" placeholder="数据库名，如 first" value="first" />
+    </div>
+    <div class="row">
+      <input id="dbPath" type="text" placeholder="数据库路径，如 _doc/test.db" value="_doc/test.db" />
+    </div>
+    <button onclick="openDB()">打开数据库</button>
+    <button onclick="closeDB()">关闭数据库</button>
+    <button onclick="isOpenDB()">是否已打开</button>
+  </div>
+  <div class="section">
+    <h3>SQL 执行</h3>
+    <div class="row">
+      <textarea id="sqlInput" rows="2" placeholder="输入 SQL 语句，如 CREATE TABLE ..."></textarea>
+    </div>
+    <button onclick="executeSQL()">执行 SQL</button>
+  </div>
+  <div class="section">
+    <h3>SQL 查询</h3>
+    <div class="row">
+      <input id="queryInput" type="text" placeholder="输入查询 SQL，如 SELECT * FROM ..." />
+    </div>
+    <button onclick="selectSQL()">查询</button>
+  </div>
+  <div class="section">
+    <h3>事务</h3>
+    <button onclick="beginTrans()">开始事务</button>
+    <button onclick="commitTrans()">提交事务</button>
+    <button onclick="rollbackTrans()">回滚事务</button>
+  </div>
+  <h3 style="font-size:1.1em;">日志</h3>
+  <div id="log"></div>
+
+  <script>
+    function log(msg) {
+      const logDiv = document.getElementById('log');
+      logDiv.innerText += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+    function getDBOptions() {
+      return {
+        name: document.getElementById('dbName').value.trim(),
+        path: document.getElementById('dbPath').value.trim()
+      };
+    }
+    function openDB() {
+      const opts = getDBOptions();
+      plus.sqlite.openDatabase({
+        name: opts.name,
+        path: opts.path,
+        success: function(){ log('openDatabase success!'); },
+        fail: function(e){ log('openDatabase failed: '+JSON.stringify(e)); }
+      });
+    }
+    function closeDB() {
+      const opts = getDBOptions();
+      plus.sqlite.closeDatabase({
+        name: opts.name,
+        path: opts.path,
+        success: function(){ log('closeDatabase success!'); },
+        fail: function(e){ log('closeDatabase failed: '+JSON.stringify(e)); }
+      });
+    }
+    function isOpenDB() {
+      const opts = getDBOptions();
+      plus.sqlite.isOpenDatabase({
+        name: opts.name,
+        path: opts.path
+      }).then(function(opened){
+        log('isOpenDatabase: ' + opened);
+      });
+    }
+    function executeSQL() {
+      const opts = getDBOptions();
+      const sql = document.getElementById('sqlInput').value.trim();
+      if (!sql) { log('请输入 SQL 语句'); return; }
+      plus.sqlite.executeSql({
+        name: opts.name,
+        path: opts.path,
+        sql: sql,
+        success: function(){ log('executeSql success!'); },
+        fail: function(e){ log('executeSql failed: '+JSON.stringify(e)); }
+      });
+    }
+    function selectSQL() {
+      const opts = getDBOptions();
+      const sql = document.getElementById('queryInput').value.trim();
+      if (!sql) { log('请输入查询 SQL'); return; }
+      plus.sqlite.selectSql({
+        name: opts.name,
+        path: opts.path,
+        sql: sql,
+        success: function(data){
+          log('selectSql success: ' + JSON.stringify(data));
+        },
+        fail: function(e){ log('selectSql failed: '+JSON.stringify(e)); }
+      });
+    }
+    function beginTrans() {
+      const opts = getDBOptions();
+      plus.sqlite.transaction({
+        name: opts.name,
+        path: opts.path,
+        operation: 'begin',
+        success: function(){ log('begin transaction success!'); },
+        fail: function(e){ log('begin transaction failed: '+JSON.stringify(e)); }
+      });
+    }
+    function commitTrans() {
+      const opts = getDBOptions();
+      plus.sqlite.transaction({
+        name: opts.name,
+        path: opts.path,
+        operation: 'commit',
+        success: function(){ log('commit transaction success!'); },
+        fail: function(e){ log('commit transaction failed: '+JSON.stringify(e)); }
+      });
+    }
+    function rollbackTrans() {
+      const opts = getDBOptions();
+      plus.sqlite.transaction({
+        name: opts.name,
+        path: opts.path,
+        operation: 'rollback',
+        success: function(){ log('rollback transaction success!'); },
+        fail: function(e){ log('rollback transaction failed: '+JSON.stringify(e)); }
+      });
+    }
+  </script>
+</body>
+</html> 

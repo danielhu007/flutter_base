@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plus.zip 压缩功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .section h2 {
+            color: #555;
+            margin-top: 0;
+        }
+        button {
+            background-color: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #005a87;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        .result {
+            background-color: #f0f8f0;
+            border: 1px solid #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .error {
+            background-color: #f8f0f0;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            color: #666;
+        }
+        .loading.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Plus.zip 压缩功能测试</h1>
+        
+        <!-- 文件压缩测试 -->
+        <div class="section">
+            <h2>📁 文件/目录压缩</h2>
+            <div class="input-group">
+                <label for="compressSrc">源文件或目录路径:</label>
+                <input type="text" id="compressSrc" placeholder="例: _doc/test.txt 或 _www/images/" value="_doc/test/">
+                <small style="color: #666; font-size: 12px;">
+                    注意：_www/ 和 _doc/ 指向应用文档目录，请先创建测试文件
+                </small>
+            </div>
+            <div class="input-group">
+                <label for="compressZip">目标ZIP文件路径:</label>
+                <input type="text" id="compressZip" placeholder="例: _doc/archive.zip" value="_doc/test_archive.zip">
+            </div>
+            <button onclick="testCompress()">压缩文件</button>
+            <div class="loading" id="compressLoading">压缩中，请稍候...</div>
+            <div class="result" id="compressResult"></div>
+        </div>
+
+        <!-- 文件解压测试 -->
+        <div class="section">
+            <h2>📂 ZIP文件解压</h2>
+            <div class="input-group">
+                <label for="decompressZip">ZIP文件路径:</label>
+                <input type="text" id="decompressZip" placeholder="例: _doc/archive.zip" value="_doc/test_archive.zip">
+            </div>
+            <div class="input-group">
+                <label for="decompressTarget">解压目标目录:</label>
+                <input type="text" id="decompressTarget" placeholder="例: _doc/extracted/" value="_doc/extracted/">
+            </div>
+            <button onclick="testDecompress()">解压文件</button>
+            <div class="loading" id="decompressLoading">解压中，请稍候...</div>
+            <div class="result" id="decompressResult"></div>
+        </div>
+
+        <!-- 图片压缩测试 -->
+        <div class="section">
+            <h2>🖼️ 图片压缩</h2>
+            <div class="input-group">
+                <label for="imageSrc">源图片路径:</label>
+                <input type="text" id="imageSrc" placeholder="例: _www/image.jpg" value="_www/test_image.jpg">
+            </div>
+            <div class="input-group">
+                <label for="imageDst">目标图片路径:</label>
+                <input type="text" id="imageDst" placeholder="例: _doc/compressed.jpg" value="_doc/compressed.jpg">
+            </div>
+            <div class="input-group">
+                <label for="imageFormat">格式:</label>
+                <select id="imageFormat">
+                    <option value="jpg">JPG</option>
+                    <option value="png">PNG</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="imageQuality">质量 (1-100):</label>
+                <input type="number" id="imageQuality" min="1" max="100" value="70">
+            </div>
+            <div class="input-group">
+                <label for="imageWidth">宽度:</label>
+                <input type="text" id="imageWidth" placeholder="例: 500px, 50%, auto" value="50%">
+            </div>
+            <div class="input-group">
+                <label for="imageHeight">高度:</label>
+                <input type="text" id="imageHeight" placeholder="例: 400px, 60%, auto" value="auto">
+            </div>
+            <div class="input-group">
+                <label for="imageRotate">旋转角度:</label>
+                <select id="imageRotate">
+                    <option value="0">不旋转</option>
+                    <option value="90">90度</option>
+                    <option value="180">180度</option>
+                    <option value="270">270度</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>
+                    <input type="checkbox" id="imageOverwrite" checked> 覆盖同名文件
+                </label>
+            </div>
+            <button onclick="testCompressImage()">压缩图片</button>
+            <div class="loading" id="imageLoading">图片压缩中，请稍候...</div>
+            <div class="result" id="imageResult"></div>
+        </div>
+
+        <!-- 视频压缩测试 -->
+        <div class="section">
+            <h2>🎥 视频压缩</h2>
+            <div class="input-group">
+                <label for="videoSrc">源视频路径:</label>
+                <input type="text" id="videoSrc" placeholder="例: _www/video.mp4" value="_www/test_video.mp4">
+            </div>
+            <div class="input-group">
+                <label for="videoQuality">压缩质量:</label>
+                <select id="videoQuality">
+                    <option value="low">低质量</option>
+                    <option value="medium">中等质量</option>
+                    <option value="high" selected>高质量</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="videoFilename">自定义输出路径 (可选):</label>
+                <input type="text" id="videoFilename" placeholder="例: _doc/compressed_video.mp4">
+            </div>
+            <button onclick="testCompressVideo()">压缩视频</button>
+            <div class="loading" id="videoLoading">视频压缩中，请稍候...</div>
+            <div class="result" id="videoResult"></div>
+        </div>
+
+        <!-- 测试文件准备 -->
+        <div class="section">
+            <h2>📝 测试文件准备</h2>
+            <p>为了测试压缩功能，首先需要创建一些测试文件。</p>
+            <button onclick="createTestFiles()">创建测试文件</button>
+            <div class="loading" id="createFilesLoading">正在创建测试文件...</div>
+            <div class="result" id="createFilesResult"></div>
+        </div>
+
+        <!-- 综合测试 -->
+        <div class="section">
+            <h2>🧪 综合测试</h2>
+            <p>点击下面的按钮执行一系列完整的压缩和解压测试。</p>
+            <button onclick="runFullTest()">运行完整测试</button>
+            <div class="loading" id="fullTestLoading">正在运行完整测试...</div>
+            <div class="result" id="fullTestResult"></div>
+        </div>
+    </div>
+
+    <script>
+        // 等待 plus 对象准备完成
+        document.addEventListener('plusready', function() {
+            console.log('Plus.zip 模块已准备就绪');
+            showResult('页面已加载，Plus.zip 模块准备就绪！', 'compressResult');
+        });
+
+        // 显示结果
+        function showResult(message, elementId, isError = false) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = isError ? 'result error' : 'result';
+        }
+
+        // 显示/隐藏加载状态
+        function showLoading(elementId, show = true) {
+            const element = document.getElementById(elementId);
+            if (show) {
+                element.classList.add('show');
+            } else {
+                element.classList.remove('show');
+            }
+        }
+
+        // 文件压缩测试
+        function testCompress() {
+            const src = document.getElementById('compressSrc').value;
+            const zipfile = document.getElementById('compressZip').value;
+            
+            if (!src || !zipfile) {
+                showResult('请填写源路径和目标ZIP文件路径', 'compressResult', true);
+                return;
+            }
+
+            showLoading('compressLoading', true);
+            showResult('开始压缩...', 'compressResult');
+
+            plus.zip.compress(
+                src,
+                zipfile,
+                function() {
+                    showLoading('compressLoading', false);
+                    showResult(`✅ 压缩成功！
+源路径: ${src}
+ZIP文件: ${zipfile}
+完成时间: ${new Date().toLocaleString()}`, 'compressResult');
+                },
+                function(error) {
+                    showLoading('compressLoading', false);
+                    showResult(`❌ 压缩失败！
+错误代码: ${error.code}
+错误信息: ${error.message}`, 'compressResult', true);
+                }
+            );
+        }
+
+        // 文件解压测试
+        function testDecompress() {
+            const zipfile = document.getElementById('decompressZip').value;
+            const target = document.getElementById('decompressTarget').value;
+            
+            if (!zipfile || !target) {
+                showResult('请填写ZIP文件路径和解压目标目录', 'decompressResult', true);
+                return;
+            }
+
+            showLoading('decompressLoading', true);
+            showResult('开始解压...', 'decompressResult');
+
+            plus.zip.decompress(
+                zipfile,
+                target,
+                function() {
+                    showLoading('decompressLoading', false);
+                    showResult(`✅ 解压成功！
+ZIP文件: ${zipfile}
+目标目录: ${target}
+完成时间: ${new Date().toLocaleString()}`, 'decompressResult');
+                },
+                function(error) {
+                    showLoading('decompressLoading', false);
+                    showResult(`❌ 解压失败！
+错误代码: ${error.code}
+错误信息: ${error.message}`, 'decompressResult', true);
+                }
+            );
+        }
+
+        // 图片压缩测试
+        function testCompressImage() {
+            const options = {
+                src: document.getElementById('imageSrc').value,
+                dst: document.getElementById('imageDst').value,
+                format: document.getElementById('imageFormat').value,
+                quality: parseInt(document.getElementById('imageQuality').value),
+                width: document.getElementById('imageWidth').value,
+                height: document.getElementById('imageHeight').value,
+                rotate: parseInt(document.getElementById('imageRotate').value),
+                overwrite: document.getElementById('imageOverwrite').checked
+            };
+            
+            if (!options.src || !options.dst) {
+                showResult('请填写源图片路径和目标图片路径', 'imageResult', true);
+                return;
+            }
+
+            showLoading('imageLoading', true);
+            showResult('开始压缩图片...', 'imageResult');
+
+            plus.zip.compressImage(
+                options,
+                function(result) {
+                    showLoading('imageLoading', false);
+                    showResult(`✅ 图片压缩成功！
+源图片: ${options.src}
+压缩后: ${result.target}
+文件大小: ${(result.size / 1024).toFixed(2)} KB
+图片尺寸: ${result.width} x ${result.height}
+完成时间: ${new Date().toLocaleString()}`, 'imageResult');
+                },
+                function(error) {
+                    showLoading('imageLoading', false);
+                    showResult(`❌ 图片压缩失败！
+错误代码: ${error.code}
+错误信息: ${error.message}`, 'imageResult', true);
+                }
+            );
+        }
+
+        // 视频压缩测试
+        function testCompressVideo() {
+            const options = {
+                src: document.getElementById('videoSrc').value,
+                quality: document.getElementById('videoQuality').value
+            };
+
+            const customFilename = document.getElementById('videoFilename').value;
+            if (customFilename) {
+                options.filename = customFilename;
+            }
+            
+            if (!options.src) {
+                showResult('请填写源视频路径', 'videoResult', true);
+                return;
+            }
+
+            showLoading('videoLoading', true);
+            showResult('开始压缩视频...', 'videoResult');
+
+            plus.zip.compressVideo(
+                options,
+                function(result) {
+                    showLoading('videoLoading', false);
+                    showResult(`✅ 视频压缩成功！
+源视频: ${options.src}
+压缩后: ${result.tempFilePath}
+文件大小: ${(result.size / 1024 / 1024).toFixed(2)} MB
+质量设置: ${options.quality}
+完成时间: ${new Date().toLocaleString()}`, 'videoResult');
+                },
+                function(error) {
+                    showLoading('videoLoading', false);
+                    showResult(`❌ 视频压缩失败！
+错误代码: ${error.code}
+错误信息: ${error.message}`, 'videoResult', true);
+                }
+            );
+        }
+
+        // 完整测试
+        function runFullTest() {
+            showLoading('fullTestLoading', true);
+            showResult('开始运行完整测试...\n', 'fullTestResult');
+            
+            let testResults = [];
+            let currentTest = 0;
+            const tests = [
+                { name: '文件压缩测试', func: runCompressTest },
+                { name: '文件解压测试', func: runDecompressTest },
+                { name: '图片压缩测试', func: runImageTest },
+                { name: '视频压缩测试', func: runVideoTest }
+            ];
+
+            function runNextTest() {
+                if (currentTest >= tests.length) {
+                    showLoading('fullTestLoading', false);
+                    showResult(`🎉 完整测试完成！
+
+测试结果汇总:
+${testResults.join('\n')}
+
+总测试数: ${tests.length}
+成功: ${testResults.filter(r => r.includes('✅')).length}
+失败: ${testResults.filter(r => r.includes('❌')).length}
+
+完成时间: ${new Date().toLocaleString()}`, 'fullTestResult');
+                    return;
+                }
+
+                const test = tests[currentTest];
+                showResult(`正在运行: ${test.name}...\n${testResults.join('\n')}`, 'fullTestResult');
+                
+                test.func((result) => {
+                    testResults.push(`${currentTest + 1}. ${test.name}: ${result}`);
+                    currentTest++;
+                    setTimeout(runNextTest, 1000);
+                });
+            }
+
+            runNextTest();
+        }
+
+        // 测试用的具体函数
+        function runCompressTest(callback) {
+            plus.zip.compress('_www/', '_doc/full_test.zip', 
+                () => callback('✅ 成功'), 
+                (error) => callback(`❌ 失败: ${error.message}`)
+            );
+        }
+
+        function runDecompressTest(callback) {
+            plus.zip.decompress('_doc/full_test.zip', '_doc/full_test_extracted/', 
+                () => callback('✅ 成功'), 
+                (error) => callback(`❌ 失败: ${error.message}`)
+            );
+        }
+
+        function runImageTest(callback) {
+            plus.zip.compressImage({
+                src: '_www/test_image.jpg',
+                dst: '_doc/full_test_image.jpg',
+                quality: 80,
+                overwrite: true
+            }, 
+                () => callback('✅ 成功'), 
+                (error) => callback(`❌ 失败: ${error.message}`)
+            );
+        }
+
+        function runVideoTest(callback) {
+            plus.zip.compressVideo({
+                src: '_www/test_video.mp4',
+                quality: 'medium'
+            }, 
+                () => callback('✅ 成功'), 
+                (error) => callback(`❌ 失败: ${error.message}`)
+            );
+        }
+
+        // 创建测试文件
+        function createTestFiles() {
+            showLoading('createFilesLoading', true);
+            showResult('正在创建测试文件...', 'createFilesResult');
+
+            // 这里我们模拟创建测试文件，实际应该通过plus.io或其他方式
+            // 由于这是demo，我们先提示用户手动创建
+            setTimeout(() => {
+                showLoading('createFilesLoading', false);
+                showResult(`📝 测试文件创建说明：
+
+由于当前demo环境限制，请通过以下方式准备测试文件：
+
+1. 在设备文档目录创建测试文件
+2. 将需要压缩的文件放入 _doc/test/ 目录
+3. 准备测试图片放入 _doc/test_image.jpg
+4. 准备测试视频放入 _doc/test_video.mp4
+
+路径说明：
+- _doc/ = 应用文档目录 (${navigator.userAgent.includes('Android') ? '/data/data/com.example.flutter_base/files/' : '~/Documents/'})
+- _www/ = 应用文档目录/www/ 
+- _downloads/ = 应用文档目录/downloads/
+
+建议创建的测试文件：
+- _doc/test/file1.txt
+- _doc/test/file2.txt  
+- _doc/test/subdirectory/file3.txt
+- _doc/test_image.jpg
+- _doc/test_video.mp4
+
+创建完成后即可进行压缩测试！`, 'createFilesResult');
+            }, 1000);
+        }
+
+        // 如果页面已经加载完成但 plus 还没准备好，显示等待信息
+        if (typeof plus === 'undefined') {
+            console.log('等待 Plus 对象初始化...');
+        }
+    </script>
+</body>
+</html>

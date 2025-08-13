@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>plus.navigator 测试</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 20px; 
+      padding: 0;
+    }
+    h2 {
+      font-size: 1.5em;
+      margin-top: 0;
+    }
+    button { 
+      margin: 5px 0; 
+      padding: 12px 16px;
+      font-size: 16px;
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: #f8f8f8;
+      cursor: pointer;
+    }
+    button:active {
+      background-color: #e0e0e0;
+    }
+    .result { 
+      margin: 10px 0; 
+      color: #333; 
+      padding: 10px;
+      background-color: #f0f0f0;
+      border-radius: 4px;
+      min-height: 20px;
+    }
+    @media (max-width: 768px) {
+      body {
+        margin: 10px;
+      }
+      button {
+        padding: 15px;
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>plus.navigator API 测试</h2>
+  <button onclick="getStatusbarHeight()">获取状态栏高度</button>
+  <div id="statusbarHeight" class="result"></div>
+
+  <button onclick="setStatusBarBackground()">设置状态栏背景色（#FF0000）</button>
+  <button onclick="getStatusBarBackground()">获取状态栏背景色</button>
+  <div id="statusbarBg" class="result"></div>
+
+  <button onclick="setStatusBarStyle('light')">设置状态栏样式 light</button>
+  <button onclick="setStatusBarStyle('dark')">设置状态栏样式 dark</button>
+  <button onclick="getStatusBarStyle()">获取状态栏样式</button>
+  <div id="statusbarStyle" class="result"></div>
+
+  <button onclick="getOrientation()">获取横竖屏状态</button>
+  <div id="orientation" class="result"></div>
+
+  <button onclick="isBackground()">是否在后台</button>
+  <div id="isBackground" class="result"></div>
+
+  <script>
+    // 确保 plus.navigator 可用
+    function checkPlusReady() {
+      if (typeof plus === 'undefined' || typeof plus.navigator === 'undefined') {
+        // 在普通浏览器中添加模拟实现
+        console.warn('plus.navigator not available, adding mock implementation');
+        window.plus = window.plus || {};
+        window.navigator = {
+          getStatusbarHeight: function() {
+            return new Promise(function(resolve, reject) {
+              // 模拟异步调用
+              setTimeout(function() {
+                resolve(20);
+              }, 100);
+            });
+          },
+          setStatusBarBackground: function(color) {
+            return new Promise(function(resolve, reject) {
+              console.log('Setting status bar background to:', color);
+              setTimeout(function() {
+                resolve();
+              }, 100);
+            });
+          },
+          getStatusBarBackground: function() {
+            return new Promise(function(resolve, reject) {
+              setTimeout(function() {
+                resolve('#000000');
+              }, 100);
+            });
+          },
+          setStatusBarStyle: function(style) {
+            return new Promise(function(resolve, reject) {
+              console.log('Setting status bar style to:', style);
+              setTimeout(function() {
+                resolve();
+              }, 100);
+            });
+          },
+          getStatusBarStyle: function() {
+            return new Promise(function(resolve, reject) {
+              setTimeout(function() {
+                resolve('light');
+              }, 100);
+            });
+          },
+          getOrientation: function() {
+            return new Promise(function(resolve, reject) {
+              setTimeout(function() {
+                resolve('portrait-primary');
+              }, 100);
+            });
+          },
+          isBackground: function() {
+            return new Promise(function(resolve, reject) {
+              setTimeout(function() {
+                resolve(false);
+              }, 100);
+            });
+          }
+        };
+        
+        // 同时创建全局 plus 对象
+        window.plus = {
+          navigator: window.navigator
+        };
+      }
+    }
+
+    // 初始化检查
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', checkPlusReady);
+    } else {
+      checkPlusReady();
+    }
+
+    function getStatusbarHeight() {
+      plus.navigator.getStatusbarHeight().then(function(res) {
+        document.getElementById('statusbarHeight').innerText = '状态栏高度: ' + res + 'px';
+      }).catch(function(error) {
+        document.getElementById('statusbarHeight').innerText = '错误: ' + error;
+      });
+    }
+    
+    function setStatusBarBackground() {
+      plus.navigator.setStatusBarBackground('#FF0000').then(function() {
+        alert('已设置为红色');
+      }).catch(function(error) {
+        alert('错误: ' + error);
+      });
+    }
+    
+    function getStatusBarBackground() {
+      plus.navigator.getStatusBarBackground().then(function(res) {
+        document.getElementById('statusbarBg').innerText = '状态栏背景色: ' + res;
+      }).catch(function(error) {
+        document.getElementById('statusbarBg').innerText = '错误: ' + error;
+      });
+    }
+    
+    function setStatusBarStyle(style) {
+      plus.navigator.setStatusBarStyle(style).then(function() {
+        alert('已设置样式: ' + style);
+      }).catch(function(error) {
+        alert('错误: ' + error);
+      });
+    }
+    
+    function getStatusBarStyle() {
+      plus.navigator.getStatusBarStyle().then(function(res) {
+        document.getElementById('statusbarStyle').innerText = '状态栏样式: ' + res;
+      }).catch(function(error) {
+        document.getElementById('statusbarStyle').innerText = '错误: ' + error;
+      });
+    }
+    
+    function getOrientation() {
+      plus.navigator.getOrientation().then(function(res) {
+        document.getElementById('orientation').innerText = '横竖屏: ' + res;
+      }).catch(function(error) {
+        document.getElementById('orientation').innerText = '错误: ' + error;
+      });
+    }
+    
+    function isBackground() {
+      plus.navigator.isBackground().then(function(res) {
+        document.getElementById('isBackground').innerText = '是否后台: ' + res;
+      }).catch(function(error) {
+        document.getElementById('isBackground').innerText = '错误: ' + error;
+      });
+    }
+  </script>
+</body>
+</html> 

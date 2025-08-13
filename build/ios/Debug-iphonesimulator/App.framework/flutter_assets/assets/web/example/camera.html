@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>plus.camera 测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #555;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        input, select {
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            word-break: break-all;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+        .log {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        .image-preview {
+            max-width: 100%;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+        .video-preview {
+            max-width: 100%;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>plus.camera 测试</h1>
+        
+        <div class="section">
+            <h2>获取摄像头</h2>
+            <div>
+                <label for="cameraIndex">摄像头索引 (1=主摄，2=辅摄)：</label>
+                <input type="number" id="cameraIndex" value="1" min="1" max="2">
+                <button onclick="getCamera()">获取摄像头</button>
+            </div>
+            <div id="cameraInfo" class="result"></div>
+        </div>
+        
+        <div class="section">
+            <h2>拍照</h2>
+            <div>
+                <label for="captureFilename">保存路径：</label>
+                <input type="text" id="captureFilename" value="_doc/camera_test.jpg" placeholder="_doc/xxx.jpg">
+                
+                <label for="captureFormat">文件格式：</label>
+                <select id="captureFormat">
+                    <option value="jpg">jpg</option>
+                    <option value="png">png</option>
+                </select>
+                
+                <label for="captureResolution">分辨率：</label>
+                <select id="captureResolution">
+                    <option value="1920*1080">1920*1080</option>
+                    <option value="1280*720">1280*720</option>
+                    <option value="640*480">640*480</option>
+                    <option value="320*240">320*240</option>
+                </select>
+                
+                <label for="captureCrop">拍照后裁剪：</label>
+                <select id="captureCrop">
+                    <option value="false">否</option>
+                    <option value="true">是</option>
+                </select>
+                
+                <label for="captureOptimize">自动旋转图片：</label>
+                <select id="captureOptimize">
+                    <option value="true">是</option>
+                    <option value="false">否</option>
+                </select>
+                
+                <button onclick="captureImage()">拍照</button>
+            </div>
+            <div id="captureResult" class="result"></div>
+            <div id="capturePreview"></div>
+        </div>
+        
+        <div class="section">
+            <h2>摄像</h2>
+            <div>
+                <label for="videoFilename">保存路径：</label>
+                <input type="text" id="videoFilename" value="_doc/video_test.mp4" placeholder="_doc/xxx.mp4">
+                
+                <label for="videoFormat">文件格式：</label>
+                <select id="videoFormat">
+                    <option value="mp4">mp4</option>
+                    <option value="3gp">3gp</option>
+                </select>
+                
+                <label for="videoResolution">分辨率：</label>
+                <select id="videoResolution">
+                    <option value="1920*1080">1920*1080</option>
+                    <option value="1280*720">1280*720</option>
+                    <option value="640*480">640*480</option>
+                    <option value="320*240">320*240</option>
+                </select>
+                
+                <label for="videoMaxDuration">最长录制秒数：</label>
+                <input type="number" id="videoMaxDuration" value="60" min="1">
+                
+                <button onclick="startVideoCapture()">开始摄像</button>
+                <button onclick="stopVideoCapture()">结束摄像</button>
+            </div>
+            <div id="videoResult" class="result"></div>
+            <div id="videoPreview"></div>
+        </div>
+        
+        <div class="section">
+            <h2>日志</h2>
+            <div id="log" class="log"></div>
+            <button onclick="clearLog()">清空日志</button>
+        </div>
+    </div>
+
+    <script>
+        let currentCamera = null;
+        
+        // 等待 plusready 事件
+        document.addEventListener('plusready', function() {
+            log('plusready 事件触发');
+        });
+        
+        // 日志函数
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        // 清空日志
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        // 获取摄像头
+        function getCamera() {
+            const index = parseInt(document.getElementById('cameraIndex').value) || 1;
+            const resultDiv = document.getElementById('cameraInfo');
+            
+            log('获取摄像头，索引: ' + index);
+            
+            try {
+                plus.camera.getCamera(index)
+                    .then(function(camera) {
+                        currentCamera = camera;
+                        log('获取摄像头成功');
+                        
+                        let info = '<div class="success">获取摄像头成功</div>';
+                        info += '<div>摄像头ID: ' + camera.id + '</div>';
+                        info += '<div>支持的拍照分辨率: ' + JSON.stringify(camera.supportedImageResolutions) + '</div>';
+                        info += '<div>支持的摄像分辨率: ' + JSON.stringify(camera.supportedVideoResolutions) + '</div>';
+                        info += '<div>支持的拍照格式: ' + JSON.stringify(camera.supportedImageFormats) + '</div>';
+                        info += '<div>支持的摄像格式: ' + JSON.stringify(camera.supportedVideoFormats) + '</div>';
+                        
+                        resultDiv.innerHTML = info;
+                    })
+                    .catch(function(error) {
+                        log('获取摄像头失败: ' + error.message);
+                        resultDiv.innerHTML = '<div class="error">获取摄像头失败: ' + error.message + '</div>';
+                    });
+            } catch (e) {
+                log('获取摄像头异常: ' + e.message);
+                resultDiv.innerHTML = '<div class="error">获取摄像头异常: ' + e.message + '</div>';
+            }
+        }
+        
+        // 拍照
+        function captureImage() {
+            if (!currentCamera) {
+                log('请先获取摄像头');
+                document.getElementById('captureResult').innerHTML = '<div class="error">请先获取摄像头</div>';
+                return;
+            }
+            
+            const filename = document.getElementById('captureFilename').value;
+            const format = document.getElementById('captureFormat').value;
+            const resolution = document.getElementById('captureResolution').value;
+            const crop = document.getElementById('captureCrop').value === 'true';
+            const optimize = document.getElementById('captureOptimize').value === 'true';
+            
+            const resultDiv = document.getElementById('captureResult');
+            const previewDiv = document.getElementById('capturePreview');
+            
+            log('开始拍照，参数: filename=' + filename + ', format=' + format + ', resolution=' + resolution);
+            
+            const options = {
+                filename: filename,
+                format: format,
+                resolution: resolution,
+                crop: crop,
+                optimize: optimize
+            };
+            
+            try {
+                currentCamera.captureImage(
+                    function(filePath) {
+                        log('拍照成功，保存路径: ' + filePath);
+                        resultDiv.innerHTML = '<div class="success">拍照成功，保存路径: ' + filePath + '</div>';
+                        
+                        // 显示图片预览
+                        previewDiv.innerHTML = '<img src="' + filePath + '" class="image-preview" alt="拍照预览">';
+                    },
+                    function(error) {
+                        log('拍照失败: ' + error.message);
+                        resultDiv.innerHTML = '<div class="error">拍照失败: ' + error.message + '</div>';
+                        previewDiv.innerHTML = '';
+                    },
+                    options
+                );
+            } catch (e) {
+                log('拍照异常: ' + e.message);
+                resultDiv.innerHTML = '<div class="error">拍照异常: ' + e.message + '</div>';
+                previewDiv.innerHTML = '';
+            }
+        }
+        
+        // 开始摄像
+        function startVideoCapture() {
+            if (!currentCamera) {
+                log('请先获取摄像头');
+                document.getElementById('videoResult').innerHTML = '<div class="error">请先获取摄像头</div>';
+                return;
+            }
+            
+            const filename = document.getElementById('videoFilename').value;
+            const format = document.getElementById('videoFormat').value;
+            const resolution = document.getElementById('videoResolution').value;
+            const videoMaxDuration = parseInt(document.getElementById('videoMaxDuration').value) || 60;
+            
+            const resultDiv = document.getElementById('videoResult');
+            const previewDiv = document.getElementById('videoPreview');
+            
+            log('开始摄像，参数: filename=' + filename + ', format=' + format + ', resolution=' + resolution + ', videoMaxDuration=' + videoMaxDuration);
+            
+            const options = {
+                filename: filename,
+                format: format,
+                resolution: resolution,
+                videoMaximumDuration: videoMaxDuration
+            };
+            
+            try {
+                currentCamera.startVideoCapture(
+                    function(filePath) {
+                        log('摄像成功，保存路径: ' + filePath);
+                        resultDiv.innerHTML = '<div class="success">摄像成功，保存路径: ' + filePath + '</div>';
+                        
+                        // 显示视频预览
+                        previewDiv.innerHTML = '<video src="' + filePath + '" class="video-preview" controls></video>';
+                    },
+                    function(error) {
+                        log('摄像失败: ' + error.message);
+                        resultDiv.innerHTML = '<div class="error">摄像失败: ' + error.message + '</div>';
+                        previewDiv.innerHTML = '';
+                    },
+                    options
+                );
+            } catch (e) {
+                log('摄像异常: ' + e.message);
+                resultDiv.innerHTML = '<div class="error">摄像异常: ' + e.message + '</div>';
+                previewDiv.innerHTML = '';
+            }
+        }
+        
+        // 结束摄像
+        function stopVideoCapture() {
+            if (!currentCamera) {
+                log('请先获取摄像头');
+                document.getElementById('videoResult').innerHTML = '<div class="error">请先获取摄像头</div>';
+                return;
+            }
+            
+            const resultDiv = document.getElementById('videoResult');
+            
+            log('结束摄像');
+            
+            try {
+                const result = currentCamera.stopVideoCapture();
+                log('结束摄像结果: ' + result);
+                resultDiv.innerHTML = '<div>结束摄像结果: ' + result + '</div>';
+            } catch (e) {
+                log('结束摄像异常: ' + e.message);
+                resultDiv.innerHTML = '<div class="error">结束摄像异常: ' + e.message + '</div>';
+            }
+        }
+    </script>
+</body>
+</html>

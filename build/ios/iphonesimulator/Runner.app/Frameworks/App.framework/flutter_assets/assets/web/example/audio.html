@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>plus.audio 测试</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    body {
+      font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f7f7f7;
+    }
+    .container {
+      max-width: 480px;
+      margin: 32px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      padding: 24px 16px 16px 16px;
+    }
+    h2 {
+      text-align: center;
+      margin-top: 0;
+      color: #333;
+    }
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .input-row input {
+      flex: 1;
+      padding: 6px 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 15px;
+    }
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    button {
+      flex: 1 1 40%;
+      min-width: 90px;
+      padding: 8px 0;
+      border: none;
+      border-radius: 6px;
+      background: #1976d2;
+      color: #fff;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover, button:active {
+      background: #1565c0;
+    }
+    .info {
+      margin-top: 16px;
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 12px 10px;
+      font-size: 15px;
+      color: #444;
+    }
+    .info-row {
+      margin-bottom: 6px;
+    }
+    #eventlog {
+      background: #222;
+      color: #b2ff59;
+      font-size: 13px;
+      border-radius: 4px;
+      padding: 6px;
+      max-height: 100px;
+      overflow: auto;
+      margin-top: 6px;
+    }
+    @media (max-width: 600px) {
+      .container { margin: 0; border-radius: 0; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>plus.audio 测试页面</h2>
+    <div class="input-row">
+      <input id="src" value="https://res.wiien.cn/weixuefang/GBSMJX/6.mp3" placeholder="输入音频地址">
+      <button style="flex:0 0 auto;min-width:70px;" onclick="createPlayer()">创建</button>
+    </div>
+    <div id="controls" style="display:none;">
+      <div class="btn-group">
+        <button onclick="player.play()">播放</button>
+        <button onclick="player.pause()">暂停</button>
+        <button onclick="player.stop()">停止</button>
+        <button onclick="seekTo()">跳转10秒</button>
+        <button onclick="toggleLoop()">切换循环</button>
+        <button onclick="setVolume()">音量0.5</button>
+        <button onclick="setRate()">倍速1.5x</button>
+        <button onclick="player.close()">关闭</button>
+      </div>
+      <div class="info">
+        <div class="info-row">当前进度: <span id="position">0</span> / <span id="duration">0</span> 秒</div>
+        <div class="info-row">状态: <span id="status">-</span></div>
+        <div class="info-row">循环: <span id="loop">false</span></div>
+        <div class="info-row">事件日志:</div>
+        <pre id="eventlog"></pre>
+      </div>
+    </div>
+  </div>
+  <script>
+    let player = null;
+    let loop = false;
+    let poll = null;
+
+    // 事件桥接：确保 window.plus._audioPlayers 和 window.plus._audioEvent 存在
+    if (!window.plus) window.plus = {};
+    if (!window.plus._audioPlayers) window.plus._audioPlayers = {};
+    window.plus._audioEvent = function(id, event) {
+      var p = window.plus._audioPlayers && window.plus._audioPlayers[id];
+      if (!p) return;
+      switch(event) {
+        case 'onPlay': p.onPlay && p.onPlay(); break;
+        case 'onPause': p.onPause && p.onPause(); break;
+        case 'onStop': p.onStop && p.onStop(); break;
+        case 'onEnded': p.onEnded && p.onEnded(); break;
+        case 'onError': p.onError && p.onError(); break;
+        case 'onTimeUpdate': p.onTimeUpdate && p.onTimeUpdate(); break;
+      }
+    };
+
+    // 自动恢复后台播放
+    document.addEventListener('plusready', function() {
+      if (plus && plus.audio && plus.audio.getCurrentPlayer) {
+        plus.audio.getCurrentPlayer().then(function(info) {
+          console.log('getCurrentPlayer', JSON.stringify(info));
+          if (info && info.id) {
+            player = info
+            // 注册到 window.plus._audioPlayers，确保事件桥接
+        
+            document.getElementById('controls').style.display = '';
+            poll = setInterval(updateInfo, 500);
+            // H5+风格事件监听
+            player.onPlay = function() { showEvent('onPlay'); };
+            player.onPause = function() { showEvent('onPause'); };
+            player.onStop = function() { showEvent('onStop'); };
+            player.onEnded = function() { showEvent('onEnded'); };
+            player.onError = function() { showEvent('onError'); };
+            player.onTimeUpdate = function() { showEvent('onTimeUpdate'); };
+          }
+        });
+      } else {
+        alert('plus.audio.getCurrentPlayer 未注入');
+      }
+    });
+
+    function createPlayer() {
+      const src = document.getElementById('src').value;
+      if (!plus || !plus.audio) {
+        alert('plus.audio 未注入');
+        return;
+      }
+      plus.audio.createPlayer({
+        src: src,
+        autoplay: false,
+        loop: false,
+        volume: 1.0,
+        playbackRate: 1.0,
+        title: '测试音频',
+        singer: 'AI',
+        epname: '专辑',
+        coverImgUrl: '',
+        backgroundControl: true
+      }).then(function(p) {
+        player = p;
+        document.getElementById('controls').style.display = '';
+        document.getElementById('status').innerText = '已创建';
+        poll = setInterval(updateInfo, 500);
+        // H5+风格事件监听
+        player.onPlay = function() { showEvent('onPlay'); };
+        player.onPause = function() { showEvent('onPause'); };
+        player.onStop = function() { showEvent('onStop'); };
+        player.onEnded = function() { showEvent('onEnded'); };
+        player.onError = function() { showEvent('onError'); };
+        player.onTimeUpdate = function() { showEvent('onTimeUpdate'); };
+      });
+    }
+    function updateInfo() {
+      if (!player) return;
+      player.getProperty('position').then(function(pos) {
+        console.log('getProperty position', player.id, pos);
+        document.getElementById('position').innerText = pos;
+      });
+      player.getProperty('duration').then(function(dur) {
+        console.log('getProperty duration', player.id, dur);
+        document.getElementById('duration').innerText = dur;
+      });
+      player.getProperty('paused').then(function(paused) {
+        console.log('getProperty paused', player.id, paused);
+        document.getElementById('status').innerText = paused ? '已暂停' : '播放中';
+      });
+      player.getProperty('loop').then(function(l) {
+        console.log('getProperty loop', player.id, l);
+        document.getElementById('loop').innerText = l;
+      });
+    }
+    function seekTo() {
+      if (player) player.seekTo(10);
+    }
+    function toggleLoop() {
+      loop = !loop;
+      if (player) player.setLoop(loop);
+    }
+    function setVolume() {
+      if (player) player.setVolume(0.5);
+    }
+    function setRate() {
+      if (player) player.setPlaybackRate(1.5);
+    }
+    function showEvent(event) {
+      const log = document.getElementById('eventlog');
+      log.innerText = `[${new Date().toLocaleTimeString()}] 触发事件: ${event}\n` + log.innerText;
+    }
+    window.onunload = function() {
+      if (poll) clearInterval(poll);
+      // 不自动关闭 player，保留后台实例以便下次进入页面恢复状态
+      // if (player) player.close();
+    };
+  </script>
+</body>
+</html> 

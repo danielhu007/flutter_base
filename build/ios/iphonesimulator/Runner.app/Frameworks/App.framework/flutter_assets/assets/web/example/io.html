@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plus IO 测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #444;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .result {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-left: 4px solid #4CAF50;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .error {
+            border-left-color: #f44336;
+        }
+        .info {
+            border-left-color: #2196F3;
+        }
+        .log {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-left: 4px solid #FFC107;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Plus IO 测试</h1>
+        
+        <div class="section">
+            <h2>文件系统根目录</h2>
+            <button onclick="testRequestFileSystem(0)">获取 _www 目录</button>
+            <button onclick="testRequestFileSystem(1)">获取 _doc 目录</button>
+            <button onclick="testRequestFileSystem(2)">获取 _documents 目录</button>
+            <button onclick="testRequestFileSystem(3)">获取 _downloads 目录</button>
+            <div id="requestFileSystemResult" class="result"></div>
+        </div>
+        
+        <div class="section">
+            <h2>路径转换</h2>
+            <input type="text" id="convertUrlInput" placeholder="输入相对路径URL，如 _doc/test.txt">
+            <button onclick="testConvertLocalFileSystemURL()">相对路径转绝对路径</button>
+            <input type="text" id="convertPathInput" placeholder="输入绝对路径">
+            <button onclick="testConvertAbsoluteFileSystem()">绝对路径转相对路径</button>
+            <div id="convertResult" class="result"></div>
+        </div>
+        
+        <div class="section">
+            <h2>文件/目录操作</h2>
+            <input type="text" id="resolveUrlInput" placeholder="输入URL，如 _doc/test.txt">
+            <button onclick="testResolveLocalFileSystemURL()">解析URL</button>
+            
+            <input type="text" id="createFilePathInput" placeholder="输入文件路径，如 _doc/test.txt">
+            <input type="text" id="createFileDataInput" placeholder="输入文件内容">
+            <button onclick="testCreateFile()">创建文件</button>
+            
+            <input type="text" id="readFilePathInput" placeholder="输入文件路径，如 _doc/test.txt">
+            <button onclick="testReadFile()">读取文件</button>
+            
+            <input type="text" id="writeFilePathInput" placeholder="输入文件路径，如 _doc/test.txt">
+            <input type="text" id="writeFileDataInput" placeholder="输入文件内容">
+            <button onclick="testWriteFile()">写入文件</button>
+            
+            <input type="text" id="deleteFilePathInput" placeholder="输入文件路径，如 _doc/test.txt">
+            <button onclick="testDeleteFile()">删除文件</button>
+            
+            <input type="text" id="createDirPathInput" placeholder="输入目录路径，如 _doc/testdir">
+            <button onclick="testCreateDirectory()">创建目录</button>
+            
+            <input type="text" id="readDirPathInput" placeholder="输入目录路径，如 _doc">
+            <button onclick="testReadDirectory()">读取目录</button>
+            
+            <input type="text" id="deleteDirPathInput" placeholder="输入目录路径，如 _doc/testdir">
+            <button onclick="testDeleteDirectory()">删除目录</button>
+            
+            <div id="fileOperationResult" class="result"></div>
+        </div>
+        
+        <div class="section">
+            <h2>文件信息</h2>
+            <input type="text" id="getFileInfoPathInput" placeholder="输入文件路径">
+            <button onclick="testGetFileInfo()">获取文件信息</button>
+            
+            <input type="text" id="getAudioInfoPathInput" placeholder="输入音频文件路径">
+            <button onclick="testGetAudioInfo()">获取音频信息</button>
+            
+            <input type="text" id="getImageInfoPathInput" placeholder="输入图片文件路径">
+            <button onclick="testGetImageInfo()">获取图片信息</button>
+            
+            <input type="text" id="getVideoInfoPathInput" placeholder="输入视频文件路径">
+            <button onclick="testGetVideoInfo()">获取视频信息</button>
+            
+            <div id="fileInfoResult" class="result"></div>
+        </div>
+        
+        <div class="section">
+            <h2>日志</h2>
+            <button onclick="clearLog()">清空日志</button>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        // 等待 plusready 事件
+        document.addEventListener('plusready', function() {
+            log('Plus IO 模块已加载');
+        });
+        
+        // 日志函数
+        function log(message) {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        // 清空日志
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+        }
+        
+        // 显示结果
+        function showResult(elementId, result, isError = false, isInfo = false) {
+            const element = document.getElementById(elementId);
+            element.textContent = JSON.stringify(result, null, 2);
+            element.className = 'result';
+            if (isError) {
+                element.className += ' error';
+            } else if (isInfo) {
+                element.className += ' info';
+            }
+        }
+        
+        // 测试获取文件系统根目录
+        function testRequestFileSystem(type) {
+            log(`请求文件系统根目录，类型: ${type}`);
+            plus.io.requestFileSystem(type, 
+                function(root) {
+                    log(`获取文件系统根目录成功: ${JSON.stringify(root)}`);
+                    showResult('requestFileSystemResult', root);
+                },
+                function(error) {
+                    log(`获取文件系统根目录失败: ${error}`);
+                    showResult('requestFileSystemResult', error, true);
+                }
+            );
+        }
+        
+        // 测试相对路径转绝对路径
+        function testConvertLocalFileSystemURL() {
+            const url = document.getElementById('convertUrlInput').value;
+            if (!url) {
+                showResult('convertResult', '请输入URL', true);
+                return;
+            }
+            
+            log(`转换相对路径URL: ${url}`);
+            plus.io.convertLocalFileSystemURL(url).then(function(result) {
+                log(`转换相对路径URL成功: ${result}`);
+                showResult('convertResult', { url: url, absoluteUrl: result }, false, true);
+            }).catch(function(error) {
+                log(`转换相对路径URL失败: ${error}`);
+                showResult('convertResult', error, true);
+            });
+        }
+        
+        // 测试绝对路径转相对路径
+        function testConvertAbsoluteFileSystem() {
+            const path = document.getElementById('convertPathInput').value;
+            if (!path) {
+                showResult('convertResult', '请输入路径', true);
+                return;
+            }
+            
+            log(`转换绝对路径: ${path}`);
+            plus.io.convertAbsoluteFileSystem(path).then(function(result) {
+                log(`转换绝对路径成功: ${result}`);
+                showResult('convertResult', { path: path, relativePath: result }, false, true);
+            }).catch(function(error) {
+                log(`转换绝对路径失败: ${error}`);
+                showResult('convertResult', error, true);
+            });
+        }
+        
+        // 测试解析URL
+        function testResolveLocalFileSystemURL() {
+            const url = document.getElementById('resolveUrlInput').value;
+            if (!url) {
+                showResult('fileOperationResult', '请输入URL', true);
+                return;
+            }
+            
+            log(`解析URL: ${url}`);
+            plus.io.resolveLocalFileSystemURL(url, 
+                function(entry) {
+                    log(`解析URL成功: ${JSON.stringify(entry)}`);
+                    showResult('fileOperationResult', entry);
+                },
+                function(error) {
+                    log(`解析URL失败: ${error}`);
+                    showResult('fileOperationResult', error, true);
+                }
+            );
+        }
+        
+        // 测试创建文件
+        function testCreateFile() {
+            const path = document.getElementById('createFilePathInput').value;
+            const data = document.getElementById('createFileDataInput').value;
+            if (!path || !data) {
+                showResult('fileOperationResult', '请输入文件路径和内容', true);
+                return;
+            }
+            
+            log(`创建文件: ${path}`);
+            plus.io.createFile(path, data, 
+                function(result) {
+                    log(`创建文件成功: ${JSON.stringify(result)}`);
+                    showResult('fileOperationResult', result);
+                },
+                function(error) {
+                    log(`创建文件失败: ${error}`);
+                    showResult('fileOperationResult', error, true);
+                }
+            );
+        }
+        
+        // 测试读取文件
+        function testReadFile() {
+            const path = document.getElementById('readFilePathInput').value;
+            if (!path) {
+                showResult('fileOperationResult', '请输入文件路径', true);
+                return;
+            }
+            
+            log(`读取文件: ${path}`);
+            plus.io.readFile(path, 
+                function(content) {
+                    log(`读取文件成功: ${content}`);
+                    showResult('fileOperationResult', { path: path, content: content });
+                },
+                function(error) {
+                    log(`读取文件失败: ${error}`);
+                    showResult('fileOperationResult', error, true);
+                }
+            );
+        }
+        
+        // 测试写入文件
+        function testWriteFile() {
+            const path = document.getElementById('writeFilePathInput').value;
+            const data = document.getElementById('writeFileDataInput').value;
+            if (!path || !data) {
+                showResult('fileOperationResult', '请输入文件路径和内容', true);
+                return;
+            }
+            
+            log(`写入文件: ${path}`);
+            plus.io.writeFile(path, data, 
+                function(result) {
+                    log(`写入文件成功: ${JSON.stringify(result)}`);
+                    showResult('fileOperationResult', result);
+                },
+                function(error) {
+                    log(`写入文件失败: ${error}`);
+                    showResult('fileOperationResult', error, true);
+                }
+            );
+        }
+        
+        // 测试删除文件
+        function testDeleteFile() {
+            const path = document.getElementById('deleteFilePathInput').value;
+            if (!path) {
+                showResult('fileOperationResult', '请输入文件路径', true);
+                return;
+            }
+            
+            log(`删除文件: ${path}`);
+            plus.io.deleteFile(path, 
+                function(result) {
+                    log(`删除文件成功: ${JSON.stringify(result)}`);
+                    showResult('fileOperationResult', result);
+                },
+                function(error) {
+                    log(`删除文件失败: ${error}`);
+                    showResult('fileOperationResult', error, true);
+                }
+            );
+        }
+        
+        // 测试创建目录
+        function testCreateDirectory() {
+            const path = document.getElementById('createDirPathInput').value;
+            if (!path) {
+                showResult('fileOperationResult', '请输入目录路径', true);
+                return;
+            }
+            
+            log(`创建目录: ${path}`);
+            plus.io.createDirectory(path, 
+                function(result) {
+                    log(`创建目录成功: ${JSON.stringify(result)}`);
+                    showResult('fileOperationResult', result);
+                },
+                function(error) {
+                    log(`创建目录失败: ${error}`);
+                    showResult('fileOperationResult', error, true);
+                }
+            );
+        }
+        
+        // 测试读取目录
+        function testReadDirectory() {
+            const path = document.getElementById('readDirPathInput').value;
+            if (!path) {
+                showResult('fileOperationResult', '请输入目录路径', true);
+                return;
+            }
+            
+            log(`读取目录: ${path}`);
+            plus.io.readDirectory(path, 
+                function(entries) {
+                    log(`读取目录成功: ${JSON.stringify(entries)}`);
+                    showResult('fileOperationResult', entries);
+                },
+                function(error) {
+                    log(`读取目录失败: ${error}`);
+                    showResult('fileOperationResult', error, true);
+                }
+            );
+        }
+        
+        // 测试删除目录
+        function testDeleteDirectory() {
+            const path = document.getElementById('deleteDirPathInput').value;
+            if (!path) {
+                showResult('fileOperationResult', '请输入目录路径', true);
+                return;
+            }
+            
+            log(`删除目录: ${path}`);
+            plus.io.deleteDirectory(path, 
+                function(result) {
+                    log(`删除目录成功: ${JSON.stringify(result)}`);
+                    showResult('fileOperationResult', result);
+                },
+                function(error) {
+                    log(`删除目录失败: ${error}`);
+                    showResult('fileOperationResult', error, true);
+                }
+            );
+        }
+        
+        // 测试获取文件信息
+        function testGetFileInfo() {
+            const path = document.getElementById('getFileInfoPathInput').value;
+            if (!path) {
+                showResult('fileInfoResult', '请输入文件路径', true);
+                return;
+            }
+            
+            log(`获取文件信息: ${path}`);
+            plus.io.getFileInfo(path, 
+                function(info) {
+                    log(`获取文件信息成功: ${JSON.stringify(info)}`);
+                    showResult('fileInfoResult', info);
+                },
+                function(error) {
+                    log(`获取文件信息失败: ${error}`);
+                    showResult('fileInfoResult', error, true);
+                }
+            );
+        }
+        
+        // 测试获取音频信息
+        function testGetAudioInfo() {
+            const path = document.getElementById('getAudioInfoPathInput').value;
+            if (!path) {
+                showResult('fileInfoResult', '请输入音频文件路径', true);
+                return;
+            }
+            
+            log(`获取音频信息: ${path}`);
+            plus.io.getAudioInfo(path, 
+                function(info) {
+                    log(`获取音频信息成功: ${JSON.stringify(info)}`);
+                    showResult('fileInfoResult', info);
+                },
+                function(error) {
+                    log(`获取音频信息失败: ${error}`);
+                    showResult('fileInfoResult', error, true);
+                }
+            );
+        }
+        
+        // 测试获取图片信息
+        function testGetImageInfo() {
+            const path = document.getElementById('getImageInfoPathInput').value;
+            if (!path) {
+                showResult('fileInfoResult', '请输入图片文件路径', true);
+                return;
+            }
+            
+            log(`获取图片信息: ${path}`);
+            plus.io.getImageInfo(path, 
+                function(info) {
+                    log(`获取图片信息成功: ${JSON.stringify(info)}`);
+                    showResult('fileInfoResult', info);
+                },
+                function(error) {
+                    log(`获取图片信息失败: ${error}`);
+                    showResult('fileInfoResult', error, true);
+                }
+            );
+        }
+        
+        // 测试获取视频信息
+        function testGetVideoInfo() {
+            const path = document.getElementById('getVideoInfoPathInput').value;
+            if (!path) {
+                showResult('fileInfoResult', '请输入视频文件路径', true);
+                return;
+            }
+            
+            log(`获取视频信息: ${path}`);
+            plus.io.getVideoInfo(path, 
+                function(info) {
+                    log(`获取视频信息成功: ${JSON.stringify(info)}`);
+                    showResult('fileInfoResult', info);
+                },
+                function(error) {
+                    log(`获取视频信息失败: ${error}`);
+                    showResult('fileInfoResult', error, true);
+                }
+            );
+        }
+    </script>
+</body>
+</html>

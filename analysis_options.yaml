@@ -1,0 +1,14 @@
+###
+### We are using the lint package https://pub.dev/packages/eliterro_lint
+###
+### Use "flutter analyze" to check if you follow all rules before merging, no issues should be found
+###
+
+include: package:eliterro_lint/lints.yaml
+
+analyzer:
+
+  exclude:
+    - lib/**/*.g.dart
+    - test/**.mocks.dart
+    - test/*registrant*

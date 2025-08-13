@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>简单测试</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: #f0f0f0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 20px;
+            font-family: monospace;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 简单测试页面</h1>
+        <p>这是一个简单的测试页面，用于验证WebView的基本功能。</p>
+        
+        <button onclick="testBasic()">基础测试</button>
+        <button onclick="testWebview()">WebView测试</button>
+        <button onclick="clearLog()">清除日志</button>
+        
+        <div id="log" class="log">等待测试...</div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${time}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        function testBasic() {
+            log('开始基础测试...');
+            log('✓ JavaScript运行正常');
+            log('✓ DOM操作正常');
+            log('✓ 样式渲染正常');
+            
+            if (window.plus) {
+                log('✓ Plus环境已加载');
+            } else {
+                log('⚠ Plus环境未加载');
+            }
+        }
+        
+        function testWebview() {
+            log('开始WebView测试...');
+            
+            if (window.plus && window.plus.webview) {
+                try {
+                    const current = window.plus.webview.currentWebview();
+                    log('✓ 当前WebView ID: ' + current.id);
+                    
+                    // 测试创建新WebView
+                    window.plus.webview.create('test.html', 'test_' + Date.now()).then(function(webview) {
+                        log('✓ 创建新WebView成功: ' + webview.id);
+                        
+                        // 延迟显示
+                        setTimeout(function() {
+                            webview.show();
+                            log('✓ 显示新WebView');
+                        }, 1000);
+                    }).catch(function(error) {
+                        log('✗ 创建WebView失败: ' + error);
+                    });
+                    
+                } catch (e) {
+                    log('✗ WebView API错误: ' + e.message);
+                }
+            } else {
+                log('✗ WebView API不可用');
+            }
+        }
+        
+        // 页面加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            log('页面DOM加载完成');
+        });
+        
+        // Plus环境就绪
+        document.addEventListener('plusready', function() {
+            log('Plus环境就绪');
+        });
+        
+        // 如果Plus已经存在
+        if (window.plus) {
+            log('Plus环境已存在');
+        }
+        
+        log('页面脚本初始化完成');
+    </script>
+</body>
+</html>

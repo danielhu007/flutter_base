@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebView事件演示</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .event-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .event-section h3 {
+            margin-top: 0;
+            color: #666;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .high-content {
+            height: 2000px;
+            background: linear-gradient(to bottom, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .touch-area {
+            width: 300px;
+            height: 200px;
+            background-color: #28a745;
+            margin: 20px auto;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            user-select: none;
+        }
+        .clickable-links a {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px 20px;
+            background-color: #17a2b8;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .clickable-links a:hover {
+            background-color: #138496;
+        }
+        .animate-box {
+            width: 100px;
+            height: 100px;
+            background-color: #ffc107;
+            margin: 20px auto;
+            border-radius: 8px;
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-30px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebView事件演示</h1>
+        
+        <div class="event-section">
+            <h3>窗口事件</h3>
+            <button onclick="testWindowEvents()">测试窗口事件</button>
+            <button onclick="createNewWebview()">创建新WebView</button>
+            <button onclick="getCurrentWebview()">获取当前WebView</button>
+            <div id="windowLog" class="log"></div>
+        </div>
+        
+        <div class="event-section">
+            <h3>资源加载事件</h3>
+            <button onclick="loadExternalResource()">加载外部资源</button>
+            <button onclick="reloadPage()">重新加载页面</button>
+            <div id="resourceLog" class="log"></div>
+        </div>
+        
+        <div class="event-section">
+            <h3>URL拦截与导航</h3>
+            <div class="clickable-links">
+                <a href="javascript:void(0)" onclick="loadBaidu()">跳转到百度</a>
+                <a href="javascript:void(0)" onclick="loadCustomURL()">加载自定义URL</a>
+                <a href="#section1">内部锚点链接</a>
+            </div>
+            <div id="urlLog" class="log"></div>
+        </div>
+        
+        <div class="event-section">
+            <h3>标题更新</h3>
+            <button onclick="changeTitle()">更改页面标题</button>
+            <div id="titleLog" class="log"></div>
+        </div>
+        
+        <div class="event-section">
+            <h3>手势事件</h3>
+            <div class="touch-area" id="touchArea">触摸/点击这里</div>
+            <div id="gestureLog" class="log"></div>
+        </div>
+        
+        <div class="event-section">
+            <h3>动画事件</h3>
+            <div class="animate-box" id="animateBox"></div>
+            <button onclick="startAnimation()">开始动画</button>
+            <button onclick="stopAnimation()">停止动画</button>
+            <div id="animationLog" class="log"></div>
+        </div>
+        
+        <div class="event-section">
+            <h3>滚动事件</h3>
+            <p>滚动页面查看滚动事件</p>
+            <div id="scrollLog" class="log"></div>
+        </div>
+        
+        <div class="event-section">
+            <h3>成功/失败回调</h3>
+            <button onclick="triggerSuccess()">触发成功回调</button>
+            <button onclick="triggerFailure()">触发失败回调</button>
+            <button onclick="triggerComplete()">触发完成回调</button>
+            <div id="callbackLog" class="log"></div>
+        </div>
+        
+        <!-- 高度内容用于测试滚动 -->
+        <div class="high-content">
+            <h2>滚动测试区域</h2>
+            <p>这是一个很高的内容区域，用于测试滚动事件</p>
+            <p>继续滚动到底部查看滚动到底部事件</p>
+            <p>滚动到顶部查看滚动到顶部事件</p>
+        </div>
+    </div>
+    
+    <script>
+        // 等待plusready事件
+        document.addEventListener('plusready', function() {
+            console.log('Plus环境已就绪');
+            initEventListeners();
+        });
+        
+        // 如果plus已经加载，直接初始化
+        if (window.plus) {
+            initEventListeners();
+        }
+        
+        function initEventListeners() {
+            // 注册各种事件监听器
+            registerWindowEvents();
+            registerResourceEvents();
+            registerURLEvents();
+            registerTitleEvents();
+            registerGestureEvents();
+            registerAnimationEvents();
+            registerScrollEvents();
+            registerCallbackEvents();
+        }
+        
+        function registerWindowEvents() {
+            const currentWebview = plus.webview.currentWebview();
+            
+            // 窗口事件
+            currentWebview.addEventListener('show', function(event) {
+                logEvent('windowLog', 'Window Show Event', event);
+            });
+            
+            currentWebview.addEventListener('hide', function(event) {
+                logEvent('windowLog', 'Window Hide Event', event);
+            });
+            
+            currentWebview.addEventListener('close', function(event) {
+                logEvent('windowLog', 'Window Close Event', event);
+            });
+            
+            currentWebview.addEventListener('focus', function(event) {
+                logEvent('windowLog', 'Window Focus Event', event);
+            });
+            
+            currentWebview.addEventListener('blur', function(event) {
+                logEvent('windowLog', 'Window Blur Event', event);
+            });
+            
+            currentWebview.addEventListener('resize', function(event) {
+                logEvent('windowLog', 'Window Resize Event', event);
+            });
+        }
+        
+        function registerResourceEvents() {
+            const currentWebview = plus.webview.currentWebview();
+            
+            currentWebview.addEventListener('loading', function(event) {
+                logEvent('resourceLog', 'Resource Loading Event', event);
+            });
+            
+            currentWebview.addEventListener('loaded', function(event) {
+                logEvent('resourceLog', 'Resource Loaded Event', event);
+            });
+            
+            currentWebview.addEventListener('error', function(event) {
+                logEvent('resourceLog', 'Resource Error Event', event);
+            });
+            
+            currentWebview.addEventListener('progress', function(event) {
+                logEvent('resourceLog', 'Resource Progress Event', event);
+            });
+            
+            currentWebview.addEventListener('resource', function(event) {
+                logEvent('resourceLog', 'Resource Event', event);
+            });
+        }
+        
+        function registerURLEvents() {
+            const currentWebview = plus.webview.currentWebview();
+            
+            currentWebview.addEventListener('beforenavigate', function(event) {
+                logEvent('urlLog', 'Before Navigate Event', event);
+            });
+        }
+        
+        function registerTitleEvents() {
+            const currentWebview = plus.webview.currentWebview();
+            
+            currentWebview.addEventListener('titlechange', function(event) {
+                logEvent('titleLog', 'Title Change Event', event);
+            });
+        }
+        
+        function registerGestureEvents() {
+            const currentWebview = plus.webview.currentWebview();
+            
+            currentWebview.addEventListener('click', function(event) {
+                logEvent('gestureLog', 'Click Event', event);
+            });
+            
+            currentWebview.addEventListener('touchstart', function(event) {
+                logEvent('gestureLog', 'Touch Start Event', event);
+            });
+            
+            currentWebview.addEventListener('touchmove', function(event) {
+                logEvent('gestureLog', 'Touch Move Event', event);
+            });
+            
+            currentWebview.addEventListener('touchend', function(event) {
+                logEvent('gestureLog', 'Touch End Event', event);
+            });
+        }
+        
+        function registerAnimationEvents() {
+            // 动画事件通过CSS动画触发
+            const animateBox = document.getElementById('animateBox');
+            
+            animateBox.addEventListener('animationstart', function(event) {
+                logEvent('animationLog', 'Animation Start Event', {
+                    animationName: event.animationName,
+                    elapsedTime: event.elapsedTime
+                });
+            });
+            
+            animateBox.addEventListener('animationend', function(event) {
+                logEvent('animationLog', 'Animation End Event', {
+                    animationName: event.animationName,
+                    elapsedTime: event.elapsedTime
+                });
+            });
+            
+            animateBox.addEventListener('animationiteration', function(event) {
+                logEvent('animationLog', 'Animation Iteration Event', {
+                    animationName: event.animationName,
+                    elapsedTime: event.elapsedTime
+                });
+            });
+        }
+        
+        function registerScrollEvents() {
+            const currentWebview = plus.webview.currentWebview();
+            
+            currentWebview.addEventListener('scroll', function(event) {
+                logEvent('scrollLog', 'Scroll Event', event);
+            });
+            
+            currentWebview.addEventListener('scrolltotop', function(event) {
+                logEvent('scrollLog', 'Scroll To Top Event', event);
+            });
+            
+            currentWebview.addEventListener('scrolltobottom', function(event) {
+                logEvent('scrollLog', 'Scroll To Bottom Event', event);
+            });
+        }
+        
+        function registerCallbackEvents() {
+            // 使用plus.events注册全局事件
+            plus.events.addEventListener('success', function(event) {
+                logEvent('callbackLog', 'Success Event', event);
+            });
+            
+            plus.events.addEventListener('failure', function(event) {
+                logEvent('callbackLog', 'Failure Event', event);
+            });
+            
+            plus.events.addEventListener('complete', function(event) {
+                logEvent('callbackLog', 'Complete Event', event);
+            });
+        }
+        
+        // 事件测试函数
+        function testWindowEvents() {
+            const currentWebview = plus.webview.currentWebview();
+            logEvent('windowLog', 'Testing Window Events', {action: 'manual_test'});
+            
+            // 模拟窗口事件
+            setTimeout(() => {
+                window.focus();
+                setTimeout(() => {
+                    window.blur();
+                }, 1000);
+            }, 500);
+        }
+        
+        function createNewWebview() {
+            // 创建测试页面的WebView
+            const webviewId = 'demo_' + Date.now();
+            logEvent('windowLog', 'Creating WebView', {id: webviewId});
+            
+            plus.webview.create('simple_test.html', webviewId).then(function(webview) {
+                logEvent('windowLog', 'Created New WebView', {id: webview.id, url: webview.url});
+                
+                // 延迟1秒后显示WebView
+                setTimeout(function() {
+                    logEvent('windowLog', 'Showing WebView', {id: webview.id});
+                    webview.show();
+                }, 1000);
+            }).catch(function(error) {
+                logEvent('windowLog', 'Failed to Create WebView', {error: error.toString()});
+            });
+        }
+        
+        function getCurrentWebview() {
+            const currentWebview = plus.webview.currentWebview();
+            logEvent('windowLog', 'Current WebView', {id: currentWebview.id, url: currentWebview.url});
+        }
+        
+        function loadExternalResource() {
+            const img = document.createElement('img');
+            img.src = 'https://via.placeholder.com/100x100?text=Test';
+            img.onload = function() {
+                logEvent('resourceLog', 'External Resource Loaded', {src: img.src});
+            };
+            img.onerror = function() {
+                logEvent('resourceLog', 'External Resource Error', {src: img.src});
+            };
+            document.body.appendChild(img);
+        }
+        
+        function reloadPage() {
+            const currentWebview = plus.webview.currentWebview();
+            currentWebview.reload();
+        }
+        
+        function loadBaidu() {
+            // const currentWebview = plus.webview.currentWebview();
+            //         currentWebview.loadURL('https://z.fs.zunlijc.com/mh5v3/');
+            plus.webview.create('https://z.fs.zunlijc.com/mh5v3/', 'baidu').then(function(wv) {
+                wv.show();
+            });
+        }
+        
+        function loadCustomURL() {
+            logEvent('urlLog', 'Loading Google', {action: 'manual_load'});
+            try {
+                // 尝试使用 plus.webview.loadURL
+                if (window.plus && window.plus.webview) {
+                    const currentWebview = plus.webview.currentWebview();
+                    currentWebview.loadURL('https://www.google.com');
+                } else {
+                    // 备用方案：直接使用 window.location
+                    window.location.href = 'https://www.google.com';
+                }
+            } catch (e) {
+                logEvent('urlLog', 'Failed to load Google', {error: e.message});
+                // 最后的备用方案
+                window.open('https://www.google.com', '_self');
+            }
+        }
+        
+        function changeTitle() {
+            const newTitle = 'WebView事件演示 - ' + new Date().toLocaleTimeString();
+            document.title = newTitle;
+            logEvent('titleLog', 'Title Changed', {newTitle: newTitle});
+        }
+        
+        function startAnimation() {
+            const animateBox = document.getElementById('animateBox');
+            animateBox.style.animationPlayState = 'running';
+            logEvent('animationLog', 'Animation Started', {action: 'manual_start'});
+        }
+        
+        function stopAnimation() {
+            const animateBox = document.getElementById('animateBox');
+            animateBox.style.animationPlayState = 'paused';
+            logEvent('animationLog', 'Animation Stopped', {action: 'manual_stop'});
+        }
+        
+        function triggerSuccess() {
+            plus.events.fireEvent('success', {
+                message: '操作成功完成',
+                timestamp: Date.now(),
+                data: {result: 'success'}
+            });
+        }
+        
+        function triggerFailure() {
+            plus.events.fireEvent('failure', {
+                message: '操作失败',
+                error: '模拟错误',
+                timestamp: Date.now(),
+                data: {result: 'failure'}
+            });
+        }
+        
+        function triggerComplete() {
+            plus.events.fireEvent('complete', {
+                message: '操作完成',
+                success: true,
+                timestamp: Date.now(),
+                data: {result: 'complete'}
+            });
+        }
+        
+        // 工具函数
+        function logEvent(logId, eventName, eventData) {
+            const logElement = document.getElementById(logId);
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong> - ${eventName}: ${JSON.stringify(eventData, null, 2)}`;
+            logElement.appendChild(entry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded');
+            
+            // 延迟检查 Plus 环境，给注入脚本一些时间
+            setTimeout(function() {
+                if (window.plus) {
+                    console.log('Plus environment found, initializing...');
+                    initEventListeners();
+                } else {
+                    console.log('Plus environment not found, showing wait message...');
+                    showWaitMessage();
+                }
+            }, 1000);
+        });
+        
+        // 显示等待信息
+        function showWaitMessage() {
+            const originalContent = document.body.innerHTML;
+            document.body.innerHTML = '<div style="text-align: center; padding: 50px;"><h2>等待Plus环境加载...</h2></div>';
+            
+            // 定期检查 Plus 环境
+            const checkInterval = setInterval(function() {
+                if (window.plus) {
+                    console.log('Plus environment found, restoring content...');
+                    clearInterval(checkInterval);
+                    document.body.innerHTML = originalContent;
+                    initEventListeners();
+                }
+            }, 500);
+        }
+        
+        // 监听 plusready 事件
+        document.addEventListener('plusready', function() {
+            console.log('Plus ready event received');
+            if (window.plus) {
+                initEventListeners();
+            }
+        });
+    </script>
+</body>
+</html>

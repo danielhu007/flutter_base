@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>NativeObj Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .section h2 {
+            color: #555;
+            margin-top: 0;
+        }
+        button {
+            background-color: #007AFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056CC;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            margin-top: 10px;
+        }
+        input, select {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>NativeObj 功能测试</h1>
+        
+        <!-- Bitmap 测试 -->
+        <div class="section">
+            <h2>Bitmap 测试</h2>
+            <button onclick="createBitmap()">创建 Bitmap</button>
+            <button onclick="loadBitmap()" id="loadBtn" disabled>加载图片</button>
+            <button onclick="saveBitmap()" id="saveBtn" disabled>保存图片</button>
+            <button onclick="saveBitmapWithBase64()" id="saveBase64Btn" disabled>保存Base64图片</button>
+            <button onclick="toBase64()" id="base64Btn" disabled>转换为 Base64</button>
+            <button onclick="clearBitmap()" id="clearBtn" disabled>清除 Bitmap</button>
+            <div class="result" id="bitmapResult"></div>
+        </div>
+        
+        <!-- View 测试 -->
+        <div class="section">
+            <h2>View 测试</h2>
+            <button onclick="createView()">创建 View</button>
+            <button onclick="drawRect()" id="rectBtn" disabled>绘制矩形</button>
+            <button onclick="drawText()" id="textBtn" disabled>绘制文本</button>
+            <button onclick="showView()" id="showBtn" disabled>显示 View</button>
+            <button onclick="hideView()" id="hideBtn" disabled>隐藏 View</button>
+            <button onclick="closeView()" id="closeBtn" disabled>关闭 View</button>
+            <div class="result" id="viewResult"></div>
+        </div>
+        
+        <!-- ImageSlider 测试 -->
+        <div class="section">
+            <h2>ImageSlider 测试</h2>
+            <button onclick="createSlider()">创建 ImageSlider</button>
+            <button onclick="addImages()" id="addImagesBtn" disabled>添加图片</button>
+            <button onclick="getCurrentIndex()" id="getIndexBtn" disabled>获取当前索引</button>
+            <div class="result" id="sliderResult"></div>
+        </div>
+        
+        <!-- 动画测试 -->
+        <div class="section">
+            <h2>动画测试</h2>
+            <button onclick="startAnimation()">开始动画</button>
+            <button onclick="clearAnimation()">清除动画</button>
+            <div class="result" id="animationResult"></div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let testBitmap = null;
+        let testView = null;
+        let testSlider = null;
+        let bitmapCreated = false;
+        let viewCreated = false;
+        let sliderCreated = false;
+        
+        // 等待 plusready 事件
+        document.addEventListener('plusready', function() {
+            console.log('plusready event fired');
+            updateUI();
+        });
+        
+        // 更新 UI 状态
+        function updateUI() {
+            // Bitmap 按钮
+            document.getElementById('loadBtn').disabled = !bitmapCreated;
+            document.getElementById('saveBtn').disabled = !bitmapCreated;
+            document.getElementById('saveBase64Btn').disabled = !bitmapCreated;
+            document.getElementById('base64Btn').disabled = !bitmapCreated;
+            document.getElementById('clearBtn').disabled = !bitmapCreated;
+            
+            // View 按钮
+            document.getElementById('rectBtn').disabled = !viewCreated;
+            document.getElementById('textBtn').disabled = !viewCreated;
+            document.getElementById('showBtn').disabled = !viewCreated;
+            document.getElementById('hideBtn').disabled = !viewCreated;
+            document.getElementById('closeBtn').disabled = !viewCreated;
+            
+            // ImageSlider 按钮
+            document.getElementById('addImagesBtn').disabled = !sliderCreated;
+            document.getElementById('getIndexBtn').disabled = !sliderCreated;
+        }
+        
+        // Bitmap 测试函数
+        function createBitmap() {
+            try {
+                testBitmap = new plus.nativeObj.Bitmap('testBitmap');
+                bitmapCreated = true;
+                updateUI();
+                document.getElementById('bitmapResult').innerText = 'Bitmap 创建成功';
+            } catch (e) {
+                document.getElementById('bitmapResult').innerText = '创建 Bitmap 失败: ' + e.message;
+            }
+        }
+        
+        function loadBitmap() {
+            if (!testBitmap) {
+                document.getElementById('bitmapResult').innerText = '请先创建 Bitmap';
+                return;
+            }
+            
+            // 这里使用一个示例图片路径，实际使用时需要替换为有效的图片路径
+            const imagePath = 'assets/images/sample.jpg';
+            testBitmap.load(imagePath, function() {
+                document.getElementById('bitmapResult').innerText = '图片加载成功';
+            }, function(error) {
+                document.getElementById('bitmapResult').innerText = '图片加载失败: ' + JSON.stringify(error);
+            });
+        }
+        
+        function saveBitmap() {
+            if (!testBitmap) {
+                document.getElementById('bitmapResult').innerText = '请先创建 Bitmap';
+                return;
+            }
+            
+            const savePath = 'documents/test_saved_image.png';
+            testBitmap.save(savePath, function() {
+                document.getElementById('bitmapResult').innerText = '图片保存成功: ' + savePath;
+            }, function(error) {
+                document.getElementById('bitmapResult').innerText = '图片保存失败: ' + JSON.stringify(error);
+            });
+        }
+        
+        // 使用提供的代码测试保存Base64图片
+        function saveBitmapWithBase64() {
+            if (!testBitmap) {
+                document.getElementById('bitmapResult').innerText = '请先创建 Bitmap';
+                return;
+            }
+            
+            // 使用你提供的测试代码
+            var base64Str1 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAACCCAMAAADQNkiAAAAA1BMVEW10NBjBBbqAAAAH0lEQVRo3u3BAQ0AAADCoPdPbQ43oAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIBLc4gbCvqR7AAAAABJRU5ErkJggg==";
+            
+            testBitmap.loadBase64Data(base64Str1, function() {
+                var timestamp = new Date().getTime();
+                var tupian = "_doc/" + timestamp + ".jpg";
+                
+                // 保存图片，使用指定的格式和覆盖选项
+                testBitmap.save(tupian, {
+                    overwrite: true,
+                    format: "jpg"
+                }, function(i) {
+                    document.getElementById('bitmapResult').innerText = '图片保存成功: ' + tupian + '\n结果: ' + JSON.stringify(i);
+                }, function(e) {
+                    document.getElementById('bitmapResult').innerText = '图片保存失败: ' + JSON.stringify(e);
+                });
+            }, function(e) {
+                document.getElementById('bitmapResult').innerText = '加载Base64图片失败: ' + JSON.stringify(e);
+            });
+        }
+        
+        function toBase64() {
+            if (!testBitmap) {
+                document.getElementById('bitmapResult').innerText = '请先创建 Bitmap';
+                return;
+            }
+            
+            testBitmap.toBase64Data().then(function(data) {
+                document.getElementById('bitmapResult').innerText = 'Base64 数据获取成功，长度: ' + data.length;
+            }).catch(function(error) {
+                document.getElementById('bitmapResult').innerText = '获取 Base64 数据失败: ' + JSON.stringify(error);
+            });
+        }
+        
+        function clearBitmap() {
+            if (!testBitmap) {
+                document.getElementById('bitmapResult').innerText = '请先创建 Bitmap';
+                return;
+            }
+            
+            testBitmap.clear();
+            bitmapCreated = false;
+            updateUI();
+            document.getElementById('bitmapResult').innerText = 'Bitmap 已清除';
+        }
+        
+        // View 测试函数
+        function createView() {
+            try {
+                testView = new plus.nativeObj.View('testView', {
+                    top: '100px',
+                    left: '50px',
+                    width: '300px',
+                    height: '200px'
+                });
+                viewCreated = true;
+                updateUI();
+                document.getElementById('viewResult').innerText = 'View 创建成功';
+            } catch (e) {
+                document.getElementById('viewResult').innerText = '创建 View 失败: ' + e.message;
+            }
+        }
+        
+        function drawRect() {
+            if (!testView) {
+                document.getElementById('viewResult').innerText = '请先创建 View';
+                return;
+            }
+            
+            testView.drawRect('#FF0000', {
+                top: '10px',
+                left: '10px',
+                width: '100px',
+                height: '50px'
+            }, 'rect1');
+            
+            document.getElementById('viewResult').innerText = '矩形绘制完成';
+        }
+        
+        function drawText() {
+            if (!testView) {
+                document.getElementById('viewResult').innerText = '请先创建 View';
+                return;
+            }
+            
+            testView.drawText('Hello NativeObj!', {
+                top: '70px',
+                left: '10px',
+                width: '200px',
+                height: '30px'
+            }, {
+                color: '#0000FF',
+                size: '16px'
+            }, 'text1');
+            
+            document.getElementById('viewResult').innerText = '文本绘制完成';
+        }
+        
+        function showView() {
+            if (!testView) {
+                document.getElementById('viewResult').innerText = '请先创建 View';
+                return;
+            }
+            
+            testView.show();
+            document.getElementById('viewResult').innerText = 'View 已显示';
+        }
+        
+        function hideView() {
+            if (!testView) {
+                document.getElementById('viewResult').innerText = '请先创建 View';
+                return;
+            }
+            
+            testView.hide();
+            document.getElementById('viewResult').innerText = 'View 已隐藏';
+        }
+        
+        function closeView() {
+            if (!testView) {
+                document.getElementById('viewResult').innerText = '请先创建 View';
+                return;
+            }
+            
+            testView.close();
+            viewCreated = false;
+            updateUI();
+            document.getElementById('viewResult').innerText = 'View 已关闭';
+        }
+        
+        // ImageSlider 测试函数
+        function createSlider() {
+            try {
+                testSlider = new plus.nativeObj.ImageSlider('testSlider', {
+                    top: '350px',
+                    left: '50px',
+                    width: '300px',
+                    height: '200px'
+                });
+                sliderCreated = true;
+                updateUI();
+                document.getElementById('sliderResult').innerText = 'ImageSlider 创建成功';
+            } catch (e) {
+                document.getElementById('sliderResult').innerText = '创建 ImageSlider 失败: ' + e.message;
+            }
+        }
+        
+        function addImages() {
+            if (!testSlider) {
+                document.getElementById('sliderResult').innerText = '请先创建 ImageSlider';
+                return;
+            }
+            
+            // 示例图片数组
+            const images = [
+                'assets/images/sample1.jpg',
+                'assets/images/sample2.jpg',
+                'assets/images/sample3.jpg'
+            ];
+            
+            testSlider.addImages(images);
+            document.getElementById('sliderResult').innerText = '图片已添加到轮播控件';
+        }
+        
+        function getCurrentIndex() {
+            if (!testSlider) {
+                document.getElementById('sliderResult').innerText = '请先创建 ImageSlider';
+                return;
+            }
+            
+            testSlider.currentImageIndex().then(function(index) {
+                document.getElementById('sliderResult').innerText = '当前图片索引: ' + index;
+            });
+        }
+        
+        // 动画测试函数
+        function startAnimation() {
+            // 创建两个示例 Bitmap 用于动画
+            const bitmap1 = new plus.nativeObj.Bitmap('animBitmap1');
+            const bitmap2 = new plus.nativeObj.Bitmap('animBitmap2');
+            
+            // 开始动画
+            const options = {
+                type: 'pop-in',
+                duration: 1000
+            };
+            
+            plus.nativeObj.View.startAnimation(options, 
+                {bitmap: bitmap1}, 
+                {bitmap: bitmap2}, 
+                function() {
+                    document.getElementById('animationResult').innerText = '动画已完成';
+                }
+            );
+            
+            document.getElementById('animationResult').innerText = '动画已开始';
+        }
+        
+        function clearAnimation() {
+            plus.nativeObj.View.clearAnimation();
+            document.getElementById('animationResult').innerText = '动画已清除';
+        }
+    </script>
+</body>
+</html>
